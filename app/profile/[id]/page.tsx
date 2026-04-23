@@ -112,9 +112,6 @@ export default function ProfilePage() {
     );
   }
 
-  const colors = getStatusColors(personnel.status);
-  const skills = parseSkills(personnel.role); // role is stored directly
-
   return (
     <Layout title={personnel.codename} subtitle={`PERSONNEL FILE // ${personnel.id}`} classified maxWidth="lg">
       <div className="py-6 space-y-4 stagger">

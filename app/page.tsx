@@ -39,8 +39,10 @@ export default function LandingPage() {
     if (booting) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const canvasEl = canvas;
+    const context = canvasEl.getContext('2d');
+    if (!context) return;
+    const ctx: CanvasRenderingContext2D = context;
 
     let animId: number;
     let moonY    = -120;
@@ -50,23 +52,23 @@ export default function LandingPage() {
 
     // Stars: radius guaranteed >= 0.3
     const stars = Array.from({ length: 180 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height * 0.7,
+      x: Math.random() * canvasEl.width,
+      y: Math.random() * canvasEl.height * 0.7,
       r: safeR(Math.random() * 1.5, 0.3),
       a: Math.random(),
     }));
 
     function resize() {
-      canvas.width  = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      canvasEl.width  = canvasEl.offsetWidth;
+      canvasEl.height = canvasEl.offsetHeight;
     }
     resize();
     window.addEventListener('resize', resize);
 
     function draw() {
       if (!mounted) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      const w = canvasEl.width, h = canvasEl.height;
 
       const sky = ctx.createLinearGradient(0, 0, 0, h);
       sky.addColorStop(0, '#040810');

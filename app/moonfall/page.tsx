@@ -66,8 +66,9 @@ export default function MoonfallPage() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const canvasEl = canvas;
-    const ctx = canvasEl.getContext('2d');
-    if (!ctx) return;
+    const context = canvasEl.getContext('2d');
+    if (!context) return;
+    const ctx: CanvasRenderingContext2D = context;
 
     let animId: number;
     let t = 0;
