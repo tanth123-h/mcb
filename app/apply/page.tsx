@@ -121,9 +121,9 @@ export default function ApplyPage() {
               </p>
             </div>
             <div className="border border-border/60 p-3 text-left space-y-1 font-mono text-[10px] text-text-muted">
-              <p>> Application status: <span className="text-yellow-400">PENDING</span></p>
-              <p>> Estimated review window: 24–72 hours</p>
-              <p>> Do not resubmit duplicate applications</p>
+              <p>{'>'} Application status: <span className="text-yellow-400">PENDING</span></p>
+              <p>{'>'} Estimated review window: 24–72 hours</p>
+              <p>{'>'} Do not resubmit duplicate applications</p>
             </div>
           </div>
           <button onClick={() => router.push('/')} className="mcb-btn-ghost w-full">

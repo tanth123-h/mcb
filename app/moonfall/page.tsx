@@ -65,7 +65,8 @@ export default function MoonfallPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const canvasEl = canvas;
+    const ctx = canvasEl.getContext('2d');
     if (!ctx) return;
 
     let animId: number;
@@ -100,7 +101,10 @@ export default function MoonfallPage() {
 
     function lerp(a: number, b: number, t: number) { return a + (b - a) * t; }
 
-    function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+    function resize() {
+      canvasEl.width = canvasEl.offsetWidth;
+      canvasEl.height = canvasEl.offsetHeight;
+    }
     resize();
     window.addEventListener('resize', resize);
 
@@ -281,15 +285,15 @@ export default function MoonfallPage() {
       // Trigger impact particles once
       if (s >= 1 && !impactDone && curMoonProg > 0.85) {
         impactDone = true;
-        const W = canvas.width, H = canvas.height;
+        const W = canvasEl.width, H = canvasEl.height;
         const er = Math.min(W, H) * 0.32;
         const ip = getImpactPt(W / 2, H / 2 + er * 0.08, er, earthRot * 20);
         spawnImpact(ip, er);
       }
       if (s === 0) { impactDone = false; curMoonProg = lerp(curMoonProg, 0, 0.05); }
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      const W = canvasEl.width, H = canvasEl.height;
       const CX = W / 2, CY = H / 2;
       const ER = Math.min(W, H) * 0.32;
       const earthCY = CY + ER * 0.08;
