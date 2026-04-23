@@ -1,0 +1,184 @@
+/* app/globals.css — MCB System */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+:root {
+  --bg:        #0A0F14;
+  --surface:   #0D1520;
+  --border:    #1A2535;
+  --text:      #E6EDF3;
+  --text-dim:  #8B99A6;
+  --accent:    #7AA2F7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Subtle text selection */
+::selection {
+  background: rgba(122, 162, 247, 0.25);
+  color: #E6EDF3;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ── Components ────────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* Input fields */
+  .mcb-input {
+    @apply w-full bg-surface border border-border text-text font-mono text-sm
+           px-3 py-2 rounded-sm
+           placeholder:text-text-muted
+           focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent/30
+           transition-colors duration-150;
+  }
+
+  /* Buttons */
+  .mcb-btn {
+    @apply inline-flex items-center justify-center gap-2
+           font-mono text-sm font-medium tracking-widest uppercase
+           px-6 py-2.5
+           border transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .mcb-btn-primary {
+    @apply mcb-btn
+           bg-accent/10 border-accent text-accent
+           hover:bg-accent hover:text-bg
+           active:scale-95;
+  }
+
+  .mcb-btn-danger {
+    @apply mcb-btn
+           bg-red-500/10 border-red-500 text-red-400
+           hover:bg-red-500 hover:text-white
+           active:scale-95;
+  }
+
+  .mcb-btn-ghost {
+    @apply mcb-btn
+           bg-transparent border-border text-text-dim
+           hover:border-accent/60 hover:text-text
+           active:scale-95;
+  }
+
+  .mcb-btn-success {
+    @apply mcb-btn
+           bg-green-500/10 border-green-500 text-green-400
+           hover:bg-green-500 hover:text-bg
+           active:scale-95;
+  }
+
+  /* Cards / panels */
+  .mcb-panel {
+    @apply bg-surface border border-border rounded-sm;
+  }
+
+  /* Section headers */
+  .mcb-section-header {
+    @apply font-mono text-xs text-text-muted tracking-widest uppercase
+           border-b border-border pb-2 mb-4;
+  }
+
+  /* Table */
+  .mcb-table {
+    @apply w-full border-collapse;
+  }
+
+  .mcb-table th {
+    @apply font-mono text-[10px] text-text-muted tracking-widest uppercase
+           text-left px-4 py-2 border-b border-border bg-bg/50;
+  }
+
+  .mcb-table td {
+    @apply font-mono text-xs text-text px-4 py-3 border-b border-border/50;
+  }
+
+  .mcb-table tr:hover td {
+    @apply bg-accent/5;
+  }
+
+  /* Classified stamp */
+  .classified-stamp {
+    @apply inline-block font-mono text-xs font-bold tracking-[0.3em]
+           border-2 border-red-500/60 text-red-500/60
+           px-2 py-0.5 rounded-sm
+           rotate-[-2deg] select-none;
+  }
+
+  /* Glitch text effect */
+  .glitch-text {
+    @apply relative animate-glitch;
+  }
+
+  /* Terminal text */
+  .terminal {
+    @apply font-mono text-accent text-sm leading-relaxed;
+  }
+
+  /* Page title */
+  .mcb-title {
+    @apply font-sans text-2xl sm:text-3xl font-bold tracking-widest uppercase text-text;
+  }
+
+  /* Separator line */
+  .mcb-divider {
+    @apply border-t border-border/60 my-6;
+  }
+}
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+
+/* Stagger children fade-in */
+.stagger > * {
+  opacity: 0;
+  animation: slideUp 0.4s ease forwards;
+}
+.stagger > *:nth-child(1)  { animation-delay: 0.05s; }
+.stagger > *:nth-child(2)  { animation-delay: 0.10s; }
+.stagger > *:nth-child(3)  { animation-delay: 0.15s; }
+.stagger > *:nth-child(4)  { animation-delay: 0.20s; }
+.stagger > *:nth-child(5)  { animation-delay: 0.25s; }
+.stagger > *:nth-child(6)  { animation-delay: 0.30s; }
+.stagger > *:nth-child(7)  { animation-delay: 0.35s; }
+.stagger > *:nth-child(8)  { animation-delay: 0.40s; }
+
+/* Noise texture overlay */
+.noise-overlay::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  z-index: 999;
+}
