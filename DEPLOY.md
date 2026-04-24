@@ -68,6 +68,15 @@ CREATE POLICY "avatars anon update"   ON storage.objects FOR UPDATE TO anon USIN
 CREATE POLICY "avatars anon delete"   ON storage.objects FOR DELETE TO anon USING (bucket_id = 'avatars');
 ```
 
+### 1.5b Set Up Task Report Storage Bucket
+
+1. Go to **Storage** → **New bucket**
+2. Name: `task-reports`
+3. Toggle **Public bucket**: ON
+4. Reuse the same public read / anon upload-update-delete policies as `avatars`, but replace the bucket id with `task-reports`
+
+This bucket is used for optional report screenshots on `/tasks/[id]/submit`.
+
 ### 1.6 Enable Realtime
 
 1. Go to **Database** → **Replication**
@@ -160,6 +169,9 @@ You'll get a URL like: `https://mcb-system-yourname.vercel.app`
 □ Visit /access → log in with new codename + MCB-0001
 □ Profile page loads with decryption animation
 □ Upload avatar on profile (requires Storage bucket)
+□ Visit /tasks → assigned directives are visible for logged-in personnel
+□ Submit a task report with optional image proof
+□ Visit /admin/tasks → create task, review submission, accept/reject
 □ Open two browser windows → change status in admin
   → second window should show realtime toast notification
 □ Sound toggle works (top bar AUDIO:ON/OFF)

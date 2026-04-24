@@ -18,6 +18,11 @@ export const supabase = createClient(url ?? '', anon ?? '');
 
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected';
 export type PersonnelStatus   = 'active' | 'injured' | 'deceased' | 'missing' | 'observation';
+export type TaskType          = 'research' | 'mission';
+export type TaskPriority      = 'low' | 'medium' | 'high';
+export type TaskStatus        = 'pending' | 'in_progress' | 'submitted' | 'accepted' | 'rejected';
+export type TaskResult        = 'success' | 'failure' | 'inconclusive';
+export type SubmissionStatus  = 'submitted' | 'accepted' | 'rejected';
 
 export interface Application {
   id: string; full_name: string; codename: string; age: number;
@@ -31,4 +36,33 @@ export interface Personnel {
 }
 export interface Squad {
   id: string; name: string; description: string; created_at: string; personnel?: Personnel[];
+}
+export interface Task {
+  id: string;
+  title: string;
+  type: TaskType;
+  description: string;
+  objective: string;
+  assigned_to: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  assigned_by?: string;
+  deadline?: string | null;
+  created_at: string;
+  personnel?: Personnel;
+  submission?: TaskSubmission | null;
+}
+export interface TaskSubmission {
+  id: string;
+  task_id: string;
+  personnel_id: string;
+  report_title: string;
+  findings: string;
+  actions_taken: string;
+  result: TaskResult;
+  notes?: string | null;
+  image_url?: string | null;
+  status: SubmissionStatus;
+  admin_feedback?: string | null;
+  created_at: string;
 }

@@ -2,10 +2,15 @@
  * lib/data.ts — MCB Data Layer
  * All Supabase queries with try/catch + typed returns.
  */
-import { supabase, Application, Personnel, Squad } from './supabase';
+import { supabase, Application, Personnel, Squad, Task, TaskSubmission, TaskStatus, SubmissionStatus, TaskPriority, TaskType, TaskResult } from './supabase';
 import { generateMCBId, generatePassword } from './utils';
 
 type Result<T> = { data: T; error: null } | { data: null; error: string };
+
+function normalizeTask(raw: any): Task {
+  const submission = Array.isArray(raw?.submission) ? (raw.submission[0] ?? null) : (raw?.submission ?? null);
+  return { ...raw, submission };
+}
 
 // ── APPLICATIONS ──────────────────────────────────────────────────────────────
 
@@ -134,6 +139,15 @@ export async function assignSquad(personnelId: string, squadId: string): Promise
   }
 }
 
+export async function clearSquadAssignment(personnelId: string): Promise<{ error: string | null }> {
+  try {
+    const { error } = await supabase.from('personnel').update({ squad_id: null }).eq('id', personnelId);
+    return { error: error?.message ?? null };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
 // ── SQUADS ────────────────────────────────────────────────────────────────────
 
 export async function fetchSquads(): Promise<{ data: Squad[]; error: string | null }> {
@@ -169,5 +183,199 @@ export async function createSquad(
     return { data: data as Squad, error: null };
   } catch (e) {
     return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+// ── TASKS ─────────────────────────────────────────────────────────────────────
+
+export async function fetchTasksForPersonnel(personnelId: string): Promise<{ data: Task[]; error: string | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*, submission:task_submissions(*)')
+      .eq('assigned_to', personnelId)
+      .order('created_at', { ascending: false });
+    return { data: (data ?? []).map(normalizeTask), error: error?.message ?? null };
+  } catch (e) {
+    return { data: [], error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export async function fetchTaskById(taskId: string): Promise<{ data: Task | null; error: string | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('*, personnel(*), submission:task_submissions(*)')
+      .eq('id', taskId)
+      .single();
+    return { data: data ? normalizeTask(data) : null, error: error?.message ?? null };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export async function fetchAllTasks(status?: 'active' | 'submitted' | 'completed'): Promise<{ data: Task[]; error: string | null }> {
+  try {
+    let q = supabase
+      .from('tasks')
+      .select('*, personnel(*), submission:task_submissions(*)')
+      .order('created_at', { ascending: false });
+    if (status === 'active') q = q.in('status', ['pending', 'in_progress']);
+    if (status === 'submitted') q = q.eq('status', 'submitted');
+    if (status === 'completed') q = q.in('status', ['accepted', 'rejected']);
+    const { data, error } = await q;
+    return { data: (data ?? []).map(normalizeTask), error: error?.message ?? null };
+  } catch (e) {
+    return { data: [], error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export async function createTask(input: {
+  title: string;
+  type: TaskType;
+  description: string;
+  objective: string;
+  assigned_to: string;
+  priority: TaskPriority;
+  assigned_by?: string;
+  deadline?: string | null;
+}): Promise<Result<Task>> {
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert({
+        ...input,
+        status: 'pending',
+        deadline: input.deadline || null,
+        assigned_by: input.assigned_by ?? 'BUREAU ADMIN',
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+    if (error) return { data: null, error: error.message };
+    return { data: data as Task, error: null };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export async function updateTaskStatus(taskId: string, status: TaskStatus): Promise<{ error: string | null }> {
+  try {
+    const { error } = await supabase.from('tasks').update({ status }).eq('id', taskId);
+    return { error: error?.message ?? null };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+const TASK_REPORT_BUCKET = 'task-reports';
+const REPORT_ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const REPORT_MAX_MB = 8;
+
+async function uploadTaskEvidence(taskId: string, personnelId: string, file: File): Promise<{ url: string | null; error: string | null }> {
+  if (!REPORT_ALLOWED.includes(file.type)) return { url: null, error: 'Invalid proof image type.' };
+  if (file.size > REPORT_MAX_MB * 1024 * 1024) return { url: null, error: `Image too large. Maximum ${REPORT_MAX_MB}MB.` };
+
+  const ext = file.name.split('.').pop() ?? 'png';
+  const path = `${personnelId}/${taskId}-${Date.now()}.${ext}`;
+  const { error } = await supabase.storage.from(TASK_REPORT_BUCKET).upload(path, file, {
+    upsert: true,
+    contentType: file.type,
+  });
+  if (error) return { url: null, error: error.message };
+
+  const { data } = supabase.storage.from(TASK_REPORT_BUCKET).getPublicUrl(path);
+  return { url: data.publicUrl, error: null };
+}
+
+export async function submitTaskReport(input: {
+  taskId: string;
+  personnelId: string;
+  reportTitle: string;
+  findings: string;
+  actionsTaken: string;
+  result: TaskResult;
+  notes?: string;
+  imageFile?: File | null;
+}): Promise<{ data: TaskSubmission | null; error: string | null }> {
+  try {
+    let imageUrl: string | null = null;
+    if (input.imageFile) {
+      const uploaded = await uploadTaskEvidence(input.taskId, input.personnelId, input.imageFile);
+      if (uploaded.error) return { data: null, error: uploaded.error };
+      imageUrl = uploaded.url;
+    }
+
+    const payload = {
+      task_id: input.taskId,
+      personnel_id: input.personnelId,
+      report_title: input.reportTitle,
+      findings: input.findings,
+      actions_taken: input.actionsTaken,
+      result: input.result,
+      notes: input.notes || null,
+      image_url: imageUrl,
+      status: 'submitted' as SubmissionStatus,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data: existing } = await supabase
+      .from('task_submissions')
+      .select('id')
+      .eq('task_id', input.taskId)
+      .eq('personnel_id', input.personnelId)
+      .maybeSingle();
+
+    let submission: TaskSubmission | null = null;
+    if (existing?.id) {
+      const { data, error } = await supabase
+        .from('task_submissions')
+        .update(payload)
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) return { data: null, error: error.message };
+      submission = data as TaskSubmission;
+    } else {
+      const { data, error } = await supabase
+        .from('task_submissions')
+        .insert(payload)
+        .select()
+        .single();
+      if (error) return { data: null, error: error.message };
+      submission = data as TaskSubmission;
+    }
+
+    const { error: taskError } = await supabase.from('tasks').update({ status: 'submitted' }).eq('id', input.taskId);
+    if (taskError) return { data: null, error: taskError.message };
+
+    return { data: submission, error: null };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export async function reviewTaskSubmission(input: {
+  taskId: string;
+  submissionId: string;
+  status: SubmissionStatus;
+  feedback?: string;
+}): Promise<{ error: string | null }> {
+  try {
+    const { error: subError } = await supabase
+      .from('task_submissions')
+      .update({ status: input.status, admin_feedback: input.feedback ?? null })
+      .eq('id', input.submissionId);
+    if (subError) return { error: subError.message };
+
+    const nextTaskStatus: TaskStatus = input.status === 'accepted' ? 'accepted' : 'rejected';
+    const { error: taskError } = await supabase
+      .from('tasks')
+      .update({ status: nextTaskStatus })
+      .eq('id', input.taskId);
+
+    return { error: taskError?.message ?? null };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' };
   }
 }

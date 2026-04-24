@@ -1,4 +1,4 @@
-import { supabase, Personnel } from './supabase';
+import { supabase, Personnel, TaskStatus, TaskPriority, TaskType, SubmissionStatus } from './supabase';
 
 export async function generateMCBId(): Promise<string> {
   const { data, error } = await supabase.rpc('next_mcb_id');
@@ -65,4 +65,23 @@ export function getStatusColors(status: Personnel['status']) {
 }
 export function getAppStatusColors(status: 'pending'|'accepted'|'rejected') {
   return { pending:{text:'text-yellow-400',bg:'bg-yellow-400/10'}, accepted:{text:'text-green-400',bg:'bg-green-400/10'}, rejected:{text:'text-red-400',bg:'bg-red-400/10'} }[status];
+}
+export function getTaskStatusColors(status: TaskStatus | SubmissionStatus) {
+  return {
+    pending:     { text:'text-yellow-400', bg:'bg-yellow-400/10' },
+    in_progress: { text:'text-blue-400',   bg:'bg-blue-400/10' },
+    submitted:   { text:'text-accent',     bg:'bg-accent/10' },
+    accepted:    { text:'text-green-400',  bg:'bg-green-400/10' },
+    rejected:    { text:'text-red-400',    bg:'bg-red-400/10' },
+  }[status];
+}
+export function getTaskPriorityColors(priority: TaskPriority) {
+  return {
+    low:    { text:'text-text-muted', bg:'bg-border/20' },
+    medium: { text:'text-yellow-400', bg:'bg-yellow-400/10' },
+    high:   { text:'text-red-400', bg:'bg-red-400/10' },
+  }[priority];
+}
+export function getTaskTypeLabel(type: TaskType) {
+  return type === 'research' ? 'RESEARCH' : 'MISSION';
 }

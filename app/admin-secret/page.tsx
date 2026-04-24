@@ -7,7 +7,7 @@ import Layout from '@/components/Layout';
 import { AppStatusBadge, PersonnelStatusBadge } from '@/components/StatusBadge';
 import {
   fetchApplications, acceptApplication, rejectApplication,
-  fetchAllPersonnel, fetchSquads, createSquad, updatePersonnelStatus,
+  fetchAllPersonnel, fetchSquads, createSquad, updatePersonnelStatus, assignSquad, clearSquadAssignment,
 } from '@/lib/data';
 import { formatTimestamp, saveAdminAuth, getAdminAuth, clearAdminAuth } from '@/lib/utils';
 import { Application, Personnel, Squad } from '@/lib/supabase';
@@ -112,6 +112,14 @@ function AdminDashboard({ onCredentials, onLogout }: { onCredentials:(c:Credenti
     e.preventDefault(); if (!newSqName.trim()) return;
     await createSquad(newSqName, newSqDesc); toast_(`Squad created.`); setNewSqName(''); setNewSqDesc(''); await load();
   }
+  async function doSquadAssign(personnelId: string, squadId: string) {
+    setBusy(personnelId);
+    const result = squadId ? await assignSquad(personnelId, squadId) : await clearSquadAssignment(personnelId);
+    if (result.error) toast_(`Error: ${result.error}`);
+    else toast_('Assignment updated.');
+    await load();
+    setBusy(null);
+  }
 
   const filtered = filter === 'all' ? apps : apps.filter(a => a.status === filter);
   const pending  = apps.filter(a => a.status === 'pending').length;
@@ -122,7 +130,10 @@ function AdminDashboard({ onCredentials, onLogout }: { onCredentials:(c:Credenti
 
       <div className="flex items-center justify-between border border-red-500/20 bg-red-500/5 px-4 py-2 my-4">
         <span className="font-mono text-[10px] text-red-400/70">⚠ ADMIN SESSION ACTIVE — CLEARANCE: DELTA</span>
-        <button onClick={onLogout} className="font-mono text-[10px] text-text-muted hover:text-red-400 transition-colors">[LOGOUT]</button>
+        <div className="flex items-center gap-3">
+          <a href="/admin/tasks" className="font-mono text-[10px] text-accent hover:text-text transition-colors">[TASK OPS]</a>
+          <button onClick={onLogout} className="font-mono text-[10px] text-text-muted hover:text-red-400 transition-colors">[LOGOUT]</button>
+        </div>
       </div>
 
       <div className="flex gap-1 border-b border-border mb-6">
@@ -174,7 +185,7 @@ function AdminDashboard({ onCredentials, onLogout }: { onCredentials:(c:Credenti
           {tab === 'personnel' && (
             <div className="overflow-x-auto">
               <table className="mcb-table">
-                <thead><tr><th>ID</th><th>CODENAME</th><th>NAME</th><th>ROLE</th><th>STATUS</th><th>CHANGE</th></tr></thead>
+                <thead><tr><th>ID</th><th>CODENAME</th><th>NAME</th><th>ROLE</th><th>STATUS</th><th>SQUAD</th><th>CHANGE</th></tr></thead>
                 <tbody>
                   {personnel.map(p => (
                     <tr key={p.id}>
@@ -183,6 +194,17 @@ function AdminDashboard({ onCredentials, onLogout }: { onCredentials:(c:Credenti
                       <td className="text-text-dim">{p.full_name}</td>
                       <td className="text-text-dim">{p.role}</td>
                       <td><PersonnelStatusBadge status={p.status} /></td>
+                      <td>
+                        <select
+                          className="bg-surface border border-border text-text font-mono text-[10px] px-2 py-1 focus:outline-none focus:border-accent/60 disabled:opacity-40"
+                          value={p.squad_id ?? ''}
+                          disabled={!!busy}
+                          onChange={e=>doSquadAssign(p.id, e.target.value)}
+                        >
+                          <option value="">UNASSIGNED</option>
+                          {squads.map(sq => <option key={sq.id} value={sq.id}>{sq.name}</option>)}
+                        </select>
+                      </td>
                       <td>
                         <select className="bg-surface border border-border text-text font-mono text-[10px] px-2 py-1 focus:outline-none focus:border-accent/60 disabled:opacity-40"
                           value={p.status} disabled={!!busy} onChange={e=>doStatusChange(p, e.target.value as Personnel['status'])}>

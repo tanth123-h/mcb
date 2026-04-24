@@ -30,6 +30,8 @@ export default function Layout({ children, title, subtitle, classified=false, ma
             <NavLink href="/apply"   label="APPLY"   active={pathname==='/apply'} />
             <NavLink href="/access"  label="ACCESS"  active={pathname==='/access'} />
             {session && <NavLink href={`/profile/${session.id}`} label="PROFILE" active={pathname.startsWith('/profile')} />}
+            {session && <NavLink href="/tasks" label="TASKS" active={pathname.startsWith('/tasks')} />}
+            {pathname.startsWith('/admin') && <NavLink href="/admin/tasks" label="TASK OPS" active={pathname.startsWith('/admin/tasks')} />}
           </div>
           {session && (
             <button onClick={()=>{clearSession(); window.location.href='/access';}} className="font-mono text-[10px] text-text-muted hover:text-red-400 transition-colors tracking-widest">LOGOUT</button>

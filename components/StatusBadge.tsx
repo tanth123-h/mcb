@@ -5,8 +5,8 @@
 
 'use client';
 
-import { Personnel, Application } from '@/lib/supabase';
-import { getStatusColors, getAppStatusColors } from '@/lib/utils';
+import { Personnel, Application, TaskPriority, TaskStatus, TaskType, SubmissionStatus } from '@/lib/supabase';
+import { getStatusColors, getAppStatusColors, getTaskPriorityColors, getTaskStatusColors, getTaskTypeLabel } from '@/lib/utils';
 
 // ── Personnel Status Badge ────────────────────────────────────────────────────
 
@@ -64,6 +64,32 @@ export function AppStatusBadge({ status }: AppStatusBadgeProps) {
       `}
     >
       {status}
+    </span>
+  );
+}
+
+export function TaskStatusBadge({ status }: { status: TaskStatus | SubmissionStatus }) {
+  const colors = getTaskStatusColors(status);
+  return (
+    <span className={`inline-flex items-center ${colors.bg} ${colors.text} font-mono text-[10px] font-medium tracking-widest uppercase px-2 py-0.5 rounded-sm border border-current/20`}>
+      {status.replace('_', ' ')}
+    </span>
+  );
+}
+
+export function TaskPriorityBadge({ priority }: { priority: TaskPriority }) {
+  const colors = getTaskPriorityColors(priority);
+  return (
+    <span className={`inline-flex items-center ${colors.bg} ${colors.text} font-mono text-[10px] font-medium tracking-widest uppercase px-2 py-0.5 rounded-sm border border-current/20`}>
+      {priority}
+    </span>
+  );
+}
+
+export function TaskTypeBadge({ type }: { type: TaskType }) {
+  return (
+    <span className="inline-flex items-center bg-surface border border-border font-mono text-[10px] text-text tracking-widest uppercase px-2 py-0.5 rounded-sm">
+      {getTaskTypeLabel(type)}
     </span>
   );
 }

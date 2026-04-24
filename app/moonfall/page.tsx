@@ -273,7 +273,8 @@ export default function MoonfallPage() {
     function draw() {
       if (!mounted) return;
       t += 0.015;
-      earthRot += 0.005;
+      // Keep the globe and MCB markers fixed in place for readability.
+      earthRot = 0;
 
       const s = stepRef.current;
       const spd = 0.022;
