@@ -52,6 +52,7 @@ export default function ApplyPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [apiErr,  setApiErr]  = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   function update(field: keyof FormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -89,7 +90,7 @@ export default function ApplyPage() {
       background_story: form.background_story.trim(),
       skills:           form.skills.trim(),
       notes:            form.notes.trim() || undefined,
-    });
+    }, imageFile);
 
     setLoading(false);
 
@@ -247,6 +248,15 @@ export default function ApplyPage() {
                 placeholder="Any additional information you wish to disclose..."
                 value={form.notes}
                 onChange={e => update('notes', e.target.value)}
+              />
+            </FormField>
+
+            <FormField label="Attach Identification / Evidence" hint="Optional. Stored in Supabase Storage bucket `applications`.">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="mcb-input file:mr-3 file:border-0 file:bg-transparent file:font-mono file:text-[10px] file:text-accent"
+                onChange={e => setImageFile(e.target.files?.[0] ?? null)}
               />
             </FormField>
           </FormSection>

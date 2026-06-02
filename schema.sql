@@ -17,7 +17,7 @@ CREATE TABLE applications (
   full_name TEXT NOT NULL, codename TEXT NOT NULL UNIQUE,
   age INTEGER NOT NULL CHECK (age >= 18 AND age <= 80),
   nationality TEXT NOT NULL, role_applied TEXT NOT NULL,
-  background_story TEXT NOT NULL, skills TEXT NOT NULL, notes TEXT,
+  background_story TEXT NOT NULL, skills TEXT NOT NULL, notes TEXT, image_url TEXT,
   status application_status NOT NULL DEFAULT 'pending', created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE TABLE personnel (

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { TaskPriorityBadge, TaskStatusBadge, TaskTypeBadge } from '@/components/StatusBadge';
 import { createTask, fetchAllPersonnel, fetchAllTasks, reviewTaskSubmission } from '@/lib/data';
@@ -245,6 +246,9 @@ function TaskAdminCard({
 
       {task.submission && (
         <div className="space-y-3">
+          <div className="flex justify-end">
+            <Link href={`/admin/tasks/${task.id}`} className="mcb-btn-ghost text-[10px]">OPEN REVIEW FILE</Link>
+          </div>
           <Field label="Admin Feedback">
             <textarea className="mcb-input resize-none" rows={3} value={feedback} onChange={e => setFeedback(e.target.value)} />
           </Field>
@@ -302,6 +306,7 @@ function SubmissionReview({
       </Field>
 
       <div className="flex gap-3">
+        <Link href={`/admin/tasks/${task.id}`} className="mcb-btn-ghost flex-1 text-center">OPEN FILE</Link>
         <button onClick={() => onReview(task, 'accepted', feedback)} disabled={busy} className="mcb-btn-success flex-1">{busy ? 'PROCESSING...' : 'ACCEPT'}</button>
         <button onClick={() => onReview(task, 'rejected', feedback)} disabled={busy} className="mcb-btn-danger flex-1">REJECT</button>
       </div>

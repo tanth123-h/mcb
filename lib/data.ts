@@ -12,15 +12,44 @@ function normalizeTask(raw: any): Task {
   return { ...raw, submission };
 }
 
+const IMAGE_ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const APPLICATION_BUCKET = 'applications';
+const TASK_REPORT_BUCKET = 'task-reports';
+const REPORT_MAX_MB = 8;
+
+async function uploadPublicImage(bucket: string, path: string, file: File, maxMb = REPORT_MAX_MB): Promise<{ url: string | null; error: string | null }> {
+  if (!IMAGE_ALLOWED.includes(file.type)) return { url: null, error: 'Invalid image type.' };
+  if (file.size > maxMb * 1024 * 1024) return { url: null, error: `Image too large. Maximum ${maxMb}MB.` };
+
+  const { error } = await supabase.storage.from(bucket).upload(path, file, {
+    upsert: true,
+    contentType: file.type,
+  });
+  if (error) return { url: null, error: error.message };
+
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return { url: data.publicUrl, error: null };
+}
+
 // ── APPLICATIONS ──────────────────────────────────────────────────────────────
 
 export async function submitApplication(
-  data: Omit<Application, 'id' | 'status' | 'created_at'>
+  data: Omit<Application, 'id' | 'status' | 'created_at'>,
+  imageFile?: File | null
 ): Promise<Result<Application>> {
   try {
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      const ext = imageFile.name.split('.').pop() ?? 'png';
+      const safeCode = data.codename.toUpperCase().replace(/[^A-Z0-9_-]/g, '-');
+      const uploaded = await uploadPublicImage(APPLICATION_BUCKET, `${safeCode}/application.${ext}`, imageFile, 8);
+      if (uploaded.error) return { data: null, error: uploaded.error };
+      imageUrl = uploaded.url;
+    }
+
     const { data: r, error } = await supabase
       .from('applications')
-      .insert({ ...data, status: 'pending', created_at: new Date().toISOString() })
+      .insert({ ...data, image_url: imageUrl, status: 'pending', created_at: new Date().toISOString() })
       .select()
       .single();
     if (error) return { data: null, error: error.message };
@@ -41,6 +70,32 @@ export async function fetchApplications(
     return { data: (data ?? []) as Application[], error: null };
   } catch (e) {
     return { data: [], error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export async function fetchApplicationById(id: string): Promise<Result<Application>> {
+  try {
+    const { data, error } = await supabase.from('applications').select('*').eq('id', id).single();
+    if (error || !data) return { data: null, error: error?.message ?? 'Not found' };
+    return { data: data as Application, error: null };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export async function fetchApplicationByCodename(codename: string): Promise<Result<Application>> {
+  try {
+    const { data, error } = await supabase
+      .from('applications')
+      .select('*')
+      .eq('codename', codename.toUpperCase())
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    if (error || !data) return { data: null, error: error?.message ?? 'Not found' };
+    return { data: data as Application, error: null };
+  } catch (e) {
+    return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };
   }
 }
 
@@ -268,24 +323,10 @@ export async function updateTaskStatus(taskId: string, status: TaskStatus): Prom
   }
 }
 
-const TASK_REPORT_BUCKET = 'task-reports';
-const REPORT_ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const REPORT_MAX_MB = 8;
-
 async function uploadTaskEvidence(taskId: string, personnelId: string, file: File): Promise<{ url: string | null; error: string | null }> {
-  if (!REPORT_ALLOWED.includes(file.type)) return { url: null, error: 'Invalid proof image type.' };
-  if (file.size > REPORT_MAX_MB * 1024 * 1024) return { url: null, error: `Image too large. Maximum ${REPORT_MAX_MB}MB.` };
-
   const ext = file.name.split('.').pop() ?? 'png';
   const path = `${personnelId}/${taskId}-${Date.now()}.${ext}`;
-  const { error } = await supabase.storage.from(TASK_REPORT_BUCKET).upload(path, file, {
-    upsert: true,
-    contentType: file.type,
-  });
-  if (error) return { url: null, error: error.message };
-
-  const { data } = supabase.storage.from(TASK_REPORT_BUCKET).getPublicUrl(path);
-  return { url: data.publicUrl, error: null };
+  return uploadPublicImage(TASK_REPORT_BUCKET, path, file, REPORT_MAX_MB);
 }
 
 export async function submitTaskReport(input: {

@@ -85,3 +85,32 @@ export function getTaskPriorityColors(priority: TaskPriority) {
 export function getTaskTypeLabel(type: TaskType) {
   return type === 'research' ? 'RESEARCH' : 'MISSION';
 }
+export function getStatusVisual(status: Personnel['status']) {
+  return {
+    active: {
+      image: '/status/active.svg',
+      color: 'text-green-400',
+      panel: 'from-emerald-500/35 via-emerald-900/20 to-slate-950/90',
+    },
+    injured: {
+      image: '/status/injured.svg',
+      color: 'text-yellow-400',
+      panel: 'from-amber-500/35 via-orange-900/20 to-slate-950/90',
+    },
+    deceased: {
+      image: '/status/deceased.svg',
+      color: 'text-red-500',
+      panel: 'from-red-600/35 via-rose-950/30 to-slate-950/90',
+    },
+    missing: {
+      image: '/status/missing.svg',
+      color: 'text-slate-300',
+      panel: 'from-slate-500/30 via-slate-800/20 to-slate-950/95',
+    },
+    observation: {
+      image: '/status/observation.svg',
+      color: 'text-purple-400',
+      panel: 'from-violet-500/35 via-fuchsia-950/25 to-slate-950/90',
+    },
+  }[status];
+}

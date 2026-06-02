@@ -27,7 +27,7 @@ export type SubmissionStatus  = 'submitted' | 'accepted' | 'rejected';
 export interface Application {
   id: string; full_name: string; codename: string; age: number;
   nationality: string; role_applied: string; background_story: string;
-  skills: string; notes?: string; status: ApplicationStatus; created_at: string;
+  skills: string; notes?: string; image_url?: string | null; status: ApplicationStatus; created_at: string;
 }
 export interface Personnel {
   id: string; full_name: string; codename: string; password: string;

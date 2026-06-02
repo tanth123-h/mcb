@@ -3,8 +3,10 @@
  */
 'use client';
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { AppStatusBadge, PersonnelStatusBadge } from '@/components/StatusBadge';
+import StatusCard from '@/components/StatusCard';
 import {
   fetchApplications, acceptApplication, rejectApplication,
   fetchAllPersonnel, fetchSquads, createSquad, updatePersonnelStatus, assignSquad, clearSquadAssignment,
@@ -160,7 +162,11 @@ function AdminDashboard({ onCredentials, onLogout }: { onCredentials:(c:Credenti
                   <tbody>
                     {filtered.map(app => (
                       <tr key={app.id}>
-                        <td className="text-accent font-medium">{app.codename}</td>
+                        <td className="text-accent font-medium">
+                          <Link href={`/admin/applications/${app.id}`} className="hover:underline">
+                            {app.codename}
+                          </Link>
+                        </td>
                         <td>{app.full_name}</td>
                         <td className="text-text-dim">{app.role_applied}</td>
                         <td><AppStatusBadge status={app.status} /></td>
@@ -168,9 +174,13 @@ function AdminDashboard({ onCredentials, onLogout }: { onCredentials:(c:Credenti
                         <td>
                           {app.status === 'pending' && (
                             <div className="flex gap-2">
+                              <Link href={`/admin/applications/${app.id}`} className="mcb-btn-ghost text-[9px] py-1 px-2">OPEN FILE</Link>
                               <button onClick={()=>doAccept(app)} disabled={!!busy} className="mcb-btn-success text-[9px] py-1 px-2">{busy===app.id?'...':'ACCEPT'}</button>
                               <button onClick={()=>doReject(app)} disabled={!!busy} className="mcb-btn-danger text-[9px] py-1 px-2">REJECT</button>
                             </div>
+                          )}
+                          {app.status !== 'pending' && (
+                            <Link href={`/admin/applications/${app.id}`} className="mcb-btn-ghost text-[9px] py-1 px-2">OPEN FILE</Link>
                           )}
                         </td>
                       </tr>
@@ -183,38 +193,17 @@ function AdminDashboard({ onCredentials, onLogout }: { onCredentials:(c:Credenti
           )}
 
           {tab === 'personnel' && (
-            <div className="overflow-x-auto">
-              <table className="mcb-table">
-                <thead><tr><th>ID</th><th>CODENAME</th><th>NAME</th><th>ROLE</th><th>STATUS</th><th>SQUAD</th><th>CHANGE</th></tr></thead>
-                <tbody>
-                  {personnel.map(p => (
-                    <tr key={p.id}>
-                      <td><a href={`/profile/${p.id}`} className="text-accent hover:underline">{p.id}</a></td>
-                      <td className="font-medium">{p.codename}</td>
-                      <td className="text-text-dim">{p.full_name}</td>
-                      <td className="text-text-dim">{p.role}</td>
-                      <td><PersonnelStatusBadge status={p.status} /></td>
-                      <td>
-                        <select
-                          className="bg-surface border border-border text-text font-mono text-[10px] px-2 py-1 focus:outline-none focus:border-accent/60 disabled:opacity-40"
-                          value={p.squad_id ?? ''}
-                          disabled={!!busy}
-                          onChange={e=>doSquadAssign(p.id, e.target.value)}
-                        >
-                          <option value="">UNASSIGNED</option>
-                          {squads.map(sq => <option key={sq.id} value={sq.id}>{sq.name}</option>)}
-                        </select>
-                      </td>
-                      <td>
-                        <select className="bg-surface border border-border text-text font-mono text-[10px] px-2 py-1 focus:outline-none focus:border-accent/60 disabled:opacity-40"
-                          value={p.status} disabled={!!busy} onChange={e=>doStatusChange(p, e.target.value as Personnel['status'])}>
-                          {['active','injured','deceased','missing','observation'].map(s=><option key={s} value={s}>{s.toUpperCase()}</option>)}
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {personnel.map(p => (
+                <PersonnelOpsCard
+                  key={p.id}
+                  personnel={p}
+                  squads={squads}
+                  busy={!!busy}
+                  onSquadAssign={doSquadAssign}
+                  onStatusChange={doStatusChange}
+                />
+              ))}
             </div>
           )}
 
@@ -296,5 +285,50 @@ function CredField({ label, value, highlight }: { label:string; value:string; hi
         <button onClick={()=>{navigator.clipboard.writeText(value).then(()=>{setC(true);setTimeout(()=>setC(false),1500)});}} className={`font-mono text-[9px] tracking-widest ${c?'text-green-400':'text-text-muted hover:text-accent'}`}>{c?'COPIED':'COPY'}</button>
       </div>
     </div>
+  );
+}
+
+function PersonnelOpsCard({
+  personnel,
+  squads,
+  busy,
+  onSquadAssign,
+  onStatusChange,
+}: {
+  personnel: Personnel;
+  squads: Squad[];
+  busy: boolean;
+  onSquadAssign: (personnelId: string, squadId: string) => void;
+  onStatusChange: (personnel: Personnel, status: Personnel['status']) => void;
+}) {
+  return (
+    <StatusCard
+      personnel={personnel}
+      action={<PersonnelStatusBadge status={personnel.status} size="sm" />}
+    >
+      <div className="grid grid-cols-2 gap-2">
+        <select
+          className="bg-bg/70 border border-border text-text font-mono text-[10px] px-2 py-1 focus:outline-none focus:border-accent/60 disabled:opacity-40"
+          value={personnel.squad_id ?? ''}
+          disabled={busy}
+          onChange={e=>onSquadAssign(personnel.id, e.target.value)}
+        >
+          <option value="">UNASSIGNED</option>
+          {squads.map(sq => <option key={sq.id} value={sq.id}>{sq.name}</option>)}
+        </select>
+        <select
+          className="bg-bg/70 border border-border text-text font-mono text-[10px] px-2 py-1 focus:outline-none focus:border-accent/60 disabled:opacity-40"
+          value={personnel.status}
+          disabled={busy}
+          onChange={e=>onStatusChange(personnel, e.target.value as Personnel['status'])}
+        >
+          {['active','injured','deceased','missing','observation'].map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
+        </select>
+      </div>
+      <div className="flex items-center justify-between">
+        <p className="font-mono text-[9px] text-text-muted">{personnel.full_name}</p>
+        <Link href={`/profile/${personnel.id}`} className="font-mono text-[10px] text-accent hover:text-text">OPEN FILE</Link>
+      </div>
+    </StatusCard>
   );
 }

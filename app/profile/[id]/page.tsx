@@ -10,10 +10,11 @@ import { useParams, useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { PersonnelStatusBadge } from '@/components/StatusBadge';
 import AvatarUpload from '@/components/AvatarUpload';
-import { fetchPersonnelById, fetchSquadWithMembers } from '@/lib/data';
-import { getSession, formatTimestamp, getStatusColors } from '@/lib/utils';
+import RecordImage from '@/components/RecordImage';
+import { fetchPersonnelById, fetchSquadWithMembers, fetchApplicationByCodename } from '@/lib/data';
+import { getSession, formatTimestamp, getStatusColors, getStatusVisual } from '@/lib/utils';
 import { usePersonnelRecord } from '@/lib/hooks/useRealtime';
-import { Personnel, Squad } from '@/lib/supabase';
+import { Application, Personnel, Squad } from '@/lib/supabase';
 
 type LoadPhase = 'booting' | 'decrypting' | 'ready' | 'error';
 
@@ -24,6 +25,7 @@ export default function ProfilePage() {
   const [phase,     setPhase]     = useState<LoadPhase>('booting');
   const [personnel, setPersonnel] = useState<Personnel | null>(null);
   const [squad,     setSquad]     = useState<(Squad & { personnel: Personnel[] }) | null>(null);
+  const [application, setApplication] = useState<Application | null>(null);
   const [bootMsg,   setBootMsg]   = useState('Initializing secure channel...');
   const [isOwn,     setIsOwn]     = useState(false);
 
@@ -60,6 +62,8 @@ export default function ProfilePage() {
       }
 
       setPersonnel(data);
+      const { data: appData } = await fetchApplicationByCodename(data.codename);
+      if (appData) setApplication(appData);
 
       // Load squad members if assigned
       if (data.squad_id) {
@@ -112,9 +116,33 @@ export default function ProfilePage() {
     );
   }
 
+  const statusVisual = getStatusVisual(personnel.status);
+
   return (
     <Layout title={personnel.codename} subtitle={`PERSONNEL FILE // ${personnel.id}`} classified maxWidth="lg">
       <div className="py-6 space-y-4 stagger">
+
+        <div className="relative overflow-hidden border border-border min-h-52">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={statusVisual.image} alt={personnel.status} className="absolute inset-0 w-full h-full object-cover" />
+          <div className={`absolute inset-0 bg-gradient-to-br ${statusVisual.panel}`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/20 to-transparent" />
+          <div className="relative z-10 p-5 min-h-52 flex flex-col justify-between">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-mono text-[10px] text-text-muted tracking-[0.35em] uppercase">Status Banner</p>
+                <p className="font-sans text-3xl font-bold tracking-[0.2em] uppercase text-text">{personnel.codename}</p>
+              </div>
+              <PersonnelStatusBadge status={personnel.status} pulse={personnel.status === 'active'} />
+            </div>
+            <div>
+              <p className={`font-sans text-4xl font-bold uppercase tracking-[0.25em] ${statusVisual.color}`}>
+                {personnel.status}
+              </p>
+              <p className="font-mono text-[10px] text-text-dim tracking-widest uppercase">{personnel.role}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Top card — Avatar + Core Info */}
         <div className="mcb-panel p-5 flex flex-col sm:flex-row gap-5">
@@ -192,6 +220,20 @@ export default function ProfilePage() {
                 <SquadMember key={member.id} member={member} currentId={id} />
               ))}
             </div>
+          </div>
+        )}
+
+        {isOwn && application && (
+          <div className="mcb-panel p-5 space-y-4">
+            <p className="mcb-section-header">APPLICATION RECORD</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <DataField label="ROLE APPLIED" value={application.role_applied} />
+              <DataField label="APPLICATION STATUS" value={application.status.toUpperCase()} accent />
+            </div>
+            <InfoBlock label="BACKGROUND STORY" value={application.background_story} />
+            <InfoBlock label="SKILLS" value={application.skills} />
+            <InfoBlock label="NOTES" value={application.notes || '—'} />
+            <RecordImage src={application.image_url} alt={`${application.codename} application evidence`} emptyLabel="No application image uploaded" />
           </div>
         )}
 
@@ -274,6 +316,15 @@ function SquadMember({ member, currentId }: { member: Personnel; currentId: stri
       <p className="font-mono text-[9px] text-text-muted">{member.role}</p>
       <PersonnelStatusBadge status={member.status} size="sm" />
     </a>
+  );
+}
+
+function InfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-border/60 p-3 space-y-1">
+      <p className="font-mono text-[10px] text-text-muted tracking-widest uppercase">{label}</p>
+      <p className="font-mono text-[11px] text-text-dim whitespace-pre-wrap">{value}</p>
+    </div>
   );
 }
 

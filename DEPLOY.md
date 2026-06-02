@@ -68,6 +68,15 @@ CREATE POLICY "avatars anon update"   ON storage.objects FOR UPDATE TO anon USIN
 CREATE POLICY "avatars anon delete"   ON storage.objects FOR DELETE TO anon USING (bucket_id = 'avatars');
 ```
 
+### 1.5a Set Up Application Evidence Bucket
+
+1. Go to **Storage** → **New bucket**
+2. Name: `applications`
+3. Toggle **Public bucket**: ON
+4. Add public read / anon upload-update-delete policies for bucket id `applications`
+
+This bucket is used by `/apply` for ID / evidence uploads.
+
 ### 1.5b Set Up Task Report Storage Bucket
 
 1. Go to **Storage** → **New bucket**
@@ -169,9 +178,12 @@ You'll get a URL like: `https://mcb-system-yourname.vercel.app`
 □ Visit /access → log in with new codename + MCB-0001
 □ Profile page loads with decryption animation
 □ Upload avatar on profile (requires Storage bucket)
+□ Submit an application with an uploaded image
+□ Visit /admin/applications/[id] → admin can inspect full application file
 □ Visit /tasks → assigned directives are visible for logged-in personnel
 □ Submit a task report with optional image proof
 □ Visit /admin/tasks → create task, review submission, accept/reject
+□ Visit /admin/tasks/[id] → admin can inspect full submission + screenshot
 □ Open two browser windows → change status in admin
   → second window should show realtime toast notification
 □ Sound toggle works (top bar AUDIO:ON/OFF)
