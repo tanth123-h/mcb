@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Layout from '@/components/Layout';
 import { submitApplication } from '@/lib/data';
+import { useI18n } from '@/lib/i18n';
 
 const ROLES = [
   'Field Operative',
@@ -47,6 +48,7 @@ const EMPTY: FormData = {
 
 export default function ApplyPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [form,    setForm]    = useState<FormData>(EMPTY);
   const [errors,  setErrors]  = useState<Partial<FormData>>({});
   const [loading, setLoading] = useState(false);
@@ -108,27 +110,27 @@ export default function ApplyPage() {
 
   if (success) {
     return (
-      <Layout title="APPLICATION SUBMITTED" subtitle="INTAKE PROCESSING">
+      <Layout title={t('app_success_title')} subtitle={t('app_success_subtitle')}>
         <div className="py-8 max-w-lg mx-auto space-y-6">
           <div className="mcb-panel p-6 text-center space-y-4">
             <div className="w-12 h-12 rounded-full border border-green-400/40 flex items-center justify-center mx-auto">
               <span className="text-green-400 text-xl">✓</span>
             </div>
             <div className="space-y-2">
-              <p className="font-mono text-xs text-green-400 tracking-widest">TRANSMISSION RECEIVED</p>
-              <p className="font-sans text-lg font-semibold text-text">Application Logged</p>
+              <p className="font-mono text-xs text-green-400 tracking-widest">{t('transmission_received')}</p>
+              <p className="font-sans text-lg font-semibold text-text">{t('application_logged')}</p>
               <p className="font-mono text-xs text-text-muted">
-                Codename <span className="text-accent">{form.codename.toUpperCase()}</span> is pending bureau review.
+                {t('label_codename')} <span className="text-accent">{form.codename.toUpperCase()}</span> {t('app_pending_note')}
               </p>
             </div>
             <div className="border border-border/60 p-3 text-left space-y-1 font-mono text-[10px] text-text-muted">
-              <p>{'>'} Application status: <span className="text-yellow-400">PENDING</span></p>
-              <p>{'>'} Estimated review window: 24–72 hours</p>
-              <p>{'>'} Do not resubmit duplicate applications</p>
+              <p>{'>'} {t('app_status_pending')} <span className="text-yellow-400">PENDING</span></p>
+              <p>{t('app_review_window')}</p>
+              <p>{t('app_no_duplicate')}</p>
             </div>
           </div>
           <button onClick={() => router.push('/')} className="mcb-btn-ghost w-full">
-            ← RETURN TO MAIN TERMINAL
+            {t('btn_return_terminal')}
           </button>
         </div>
       </Layout>
@@ -136,157 +138,85 @@ export default function ApplyPage() {
   }
 
   return (
-    <Layout title="PERSONNEL APPLICATION" subtitle="BUREAU INTAKE FORM" classified>
+    <Layout title={t('nav_apply').toUpperCase() + ' — PERSONNEL APPLICATION'} subtitle="BUREAU INTAKE FORM" classified>
       <div className="py-6 max-w-2xl">
-        {/* Form intro */}
         <div className="border border-accent/20 bg-accent/5 p-4 mb-6 font-mono text-[11px] text-text-dim space-y-1">
-          <p>FORM-MCB-APP-002 // CLASSIFICATION: RESTRICTED</p>
-          <p>All fields marked with * are mandatory. False declarations will result in immediate disqualification.</p>
+          <p>{t('form_header')}</p>
+          <p>{t('form_warning')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 stagger">
 
-          {/* Section: Identity */}
-          <FormSection label="01 — IDENTITY">
+          <FormSection label={t('section_identity')}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField label="Full Name *" error={errors.full_name}>
-                <input
-                  type="text"
-                  className="mcb-input"
-                  placeholder="First Last"
-                  value={form.full_name}
-                  onChange={e => update('full_name', e.target.value)}
-                />
+              <FormField label={t('label_full_name')} error={errors.full_name}>
+                <input type="text" className="mcb-input" placeholder="First Last"
+                  value={form.full_name} onChange={e => update('full_name', e.target.value)} />
               </FormField>
 
-              <FormField label="Codename *" error={errors.codename} hint="Unique identifier. Uppercase, no spaces.">
-                <input
-                  type="text"
-                  className="mcb-input uppercase"
-                  placeholder="GHOST-7 / BLACKOUT / VIPER"
-                  value={form.codename}
-                  onChange={e => update('codename', e.target.value.toUpperCase())}
-                />
+              <FormField label={t('label_codename_field')} error={errors.codename} hint={t('hint_codename')}>
+                <input type="text" className="mcb-input uppercase" placeholder="GHOST-7 / BLACKOUT / VIPER"
+                  value={form.codename} onChange={e => update('codename', e.target.value.toUpperCase())} />
               </FormField>
 
-              <FormField label="Age *" error={errors.age}>
-                <input
-                  type="number"
-                  className="mcb-input"
-                  placeholder="18–80"
-                  min={18} max={80}
-                  value={form.age}
-                  onChange={e => update('age', e.target.value)}
-                />
+              <FormField label={t('label_age')} error={errors.age}>
+                <input type="number" className="mcb-input" placeholder="18–80" min={18} max={80}
+                  value={form.age} onChange={e => update('age', e.target.value)} />
               </FormField>
 
-              <FormField label="Nationality *" error={errors.nationality}>
-                <input
-                  type="text"
-                  className="mcb-input"
-                  placeholder="e.g. American"
-                  value={form.nationality}
-                  onChange={e => update('nationality', e.target.value)}
-                />
+              <FormField label={t('label_nationality')} error={errors.nationality}>
+                <input type="text" className="mcb-input" placeholder="e.g. American"
+                  value={form.nationality} onChange={e => update('nationality', e.target.value)} />
               </FormField>
             </div>
           </FormSection>
 
-          {/* Section: Assignment */}
-          <FormSection label="02 — DESIRED ASSIGNMENT">
-            <FormField label="Role Applied *" error={errors.role_applied}>
-              <select
-                className="mcb-input"
-                value={form.role_applied}
-                onChange={e => update('role_applied', e.target.value)}
-              >
+          <FormSection label={t('section_assignment')}>
+            <FormField label={t('label_role')} error={errors.role_applied}>
+              <select className="mcb-input" value={form.role_applied} onChange={e => update('role_applied', e.target.value)}>
                 <option value="">— Select Role —</option>
-                {ROLES.map(r => (
-                  <option key={r} value={r}>{r}</option>
-                ))}
+                {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </FormField>
           </FormSection>
 
-          {/* Section: Background */}
-          <FormSection label="03 — BACKGROUND DISCLOSURE">
-            <FormField
-              label="Background Story *"
-              error={errors.background_story}
-              hint="Minimum 50 characters. Previous experience, special circumstances, clearance history."
-            >
-              <textarea
-                className="mcb-input resize-none"
-                rows={5}
+          <FormSection label={t('section_background')}>
+            <FormField label={t('label_background')} error={errors.background_story} hint={t('hint_background')}>
+              <textarea className="mcb-input resize-none" rows={5}
                 placeholder="Describe your relevant background, previous assignments, and reason for applying to the Bureau..."
-                value={form.background_story}
-                onChange={e => update('background_story', e.target.value)}
-              />
-              <p className="font-mono text-[10px] text-text-muted mt-1 text-right">
-                {form.background_story.length} chars
-              </p>
+                value={form.background_story} onChange={e => update('background_story', e.target.value)} />
+              <p className="font-mono text-[10px] text-text-muted mt-1 text-right">{form.background_story.length} chars</p>
             </FormField>
 
-            <FormField
-              label="Skills *"
-              error={errors.skills}
-              hint="Comma-separated. e.g. Demolitions, Tactical Analysis, Field Medicine"
-            >
-              <input
-                type="text"
-                className="mcb-input"
-                placeholder="Combat Operations, Cryptography, Surveillance..."
-                value={form.skills}
-                onChange={e => update('skills', e.target.value)}
-              />
+            <FormField label={t('label_skills')} error={errors.skills} hint={t('hint_skills')}>
+              <input type="text" className="mcb-input" placeholder="Combat Operations, Cryptography, Surveillance..."
+                value={form.skills} onChange={e => update('skills', e.target.value)} />
             </FormField>
 
-            <FormField label="Additional Notes" error={errors.notes} hint="Optional.">
-              <textarea
-                className="mcb-input resize-none"
-                rows={3}
+            <FormField label={t('label_notes')} error={errors.notes} hint={t('hint_notes')}>
+              <textarea className="mcb-input resize-none" rows={3}
                 placeholder="Any additional information you wish to disclose..."
-                value={form.notes}
-                onChange={e => update('notes', e.target.value)}
-              />
+                value={form.notes} onChange={e => update('notes', e.target.value)} />
             </FormField>
 
-            <FormField label="Attach Identification / Evidence" hint="Optional. Stored in Supabase Storage bucket `applications`.">
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
+            <FormField label={t('label_attach')} hint="Optional. Stored in Supabase Storage bucket `applications`.">
+              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif"
                 className="mcb-input file:mr-3 file:border-0 file:bg-transparent file:font-mono file:text-[10px] file:text-accent"
-                onChange={e => setImageFile(e.target.files?.[0] ?? null)}
-              />
+                onChange={e => setImageFile(e.target.files?.[0] ?? null)} />
             </FormField>
           </FormSection>
 
-          {/* Error */}
           {apiErr && (
             <div className="border border-red-500/40 bg-red-500/10 p-3 font-mono text-xs text-red-400">
               ✗ {apiErr}
             </div>
           )}
 
-          {/* Submit */}
           <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="mcb-btn-primary w-full py-3 text-sm tracking-[0.3em]"
-            >
-              {loading ? (
-                <>
-                  <span className="animate-blink">▌</span>
-                  SUBMITTING TO BUREAU...
-                </>
-              ) : (
-                '▶ SUBMIT APPLICATION'
-              )}
+            <button type="submit" disabled={loading} className="mcb-btn-primary w-full py-3 text-sm tracking-[0.3em]">
+              {loading ? <><span className="animate-blink">▌</span> {t('submitting')}</> : t('btn_submit_app')}
             </button>
-            <p className="font-mono text-[10px] text-text-muted text-center mt-2">
-              By submitting, you agree to Bureau Directive 7-A and consent to full background vetting.
-            </p>
+            <p className="font-mono text-[10px] text-text-muted text-center mt-2">{t('directive_agree')}</p>
           </div>
 
         </form>

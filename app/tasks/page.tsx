@@ -8,6 +8,7 @@ import { TaskPriorityBadge, TaskStatusBadge, TaskTypeBadge } from '@/components/
 import { fetchTasksForPersonnel, updateTaskStatus } from '@/lib/data';
 import { Task } from '@/lib/supabase';
 import { formatTimestamp, getSession } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 export default function TasksPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function TasksPage() {
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const { t } = useI18n();
 
   const session = useMemo(() => getSession(), []);
 
@@ -52,7 +54,7 @@ export default function TasksPage() {
   if (!session) return null;
 
   return (
-    <Layout title="TASK BOARD" subtitle={`OPERATIVE QUEUE // ${session.codename}`} classified maxWidth="lg">
+    <Layout title={t('task_board')} subtitle={`OPERATIVE QUEUE // ${session.codename}`} classified maxWidth="lg">
       <div className="py-6 space-y-4">
         {notice && (
           <div className="border border-accent/30 bg-accent/5 p-3 font-mono text-[11px] text-accent">
@@ -61,11 +63,11 @@ export default function TasksPage() {
         )}
 
         {loading ? (
-          <p className="font-mono text-xs text-text-muted py-10 text-center animate-blink">Loading assignments...</p>
+          <p className="font-mono text-xs text-text-muted py-10 text-center animate-blink">{t('loading_assignments')}</p>
         ) : tasks.length === 0 ? (
           <div className="panel p-8 text-center space-y-2">
-            <p className="font-mono text-xs text-text">No active directives assigned.</p>
-            <p className="font-mono text-[10px] text-text-muted">Await bureau command for new research tasks or field missions.</p>
+            <p className="font-mono text-xs text-text">{t('no_directives')}</p>
+            <p className="font-mono text-[10px] text-text-muted">{t('await_command')}</p>
           </div>
         ) : (
           tasks.map(task => (
@@ -80,24 +82,24 @@ export default function TasksPage() {
                   <div>
                     <p className="font-sans text-xl font-bold tracking-wide text-text">{task.title}</p>
                     <p className="font-mono text-[10px] text-text-muted tracking-widest">
-                      ASSIGNED BY {task.assigned_by ?? 'BUREAU ADMIN'} // {formatTimestamp(task.created_at)}
+                      {t('assigned_by')} {task.assigned_by ?? 'BUREAU ADMIN'} // {formatTimestamp(task.created_at)}
                     </p>
                   </div>
                 </div>
                 <div className="font-mono text-[10px] text-text-muted text-left sm:text-right">
-                  <p>Deadline: {task.deadline ? formatTimestamp(task.deadline) : 'OPEN'}</p>
-                  <p>Task ID: {task.id.slice(0, 8).toUpperCase()}</p>
+                  <p>{t('deadline')} {task.deadline ? formatTimestamp(task.deadline) : t('open_deadline')}</p>
+                  <p>{t('task_id')} {task.id.slice(0, 8).toUpperCase()}</p>
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <InfoBlock label="Description" value={task.description} />
-                <InfoBlock label="Objective" value={task.objective} />
+                <InfoBlock label={t('description')} value={task.description} />
+                <InfoBlock label={t('objective')} value={task.objective} />
               </div>
 
               {task.submission?.admin_feedback && (
                 <div className="border border-yellow-400/20 bg-yellow-400/5 p-3">
-                  <p className="font-mono text-[10px] text-yellow-400 tracking-widest mb-1">ADMIN FEEDBACK</p>
+                  <p className="font-mono text-[10px] text-yellow-400 tracking-widest mb-1">{t('admin_feedback')}</p>
                   <p className="font-mono text-[11px] text-text-dim">{task.submission.admin_feedback}</p>
                 </div>
               )}
@@ -109,11 +111,11 @@ export default function TasksPage() {
                     disabled={busyId === task.id}
                     className="mcb-btn-ghost text-[10px]"
                   >
-                    {busyId === task.id ? 'SYNCING...' : 'MARK IN PROGRESS'}
+                    {busyId === task.id ? t('syncing') : t('btn_mark_progress')}
                   </button>
                 )}
                 <Link href={`/tasks/${task.id}/submit`} className="mcb-btn-primary text-[10px]">
-                  {task.status === 'submitted' ? 'VIEW SUBMISSION' : 'SUBMIT REPORT'}
+                  {task.status === 'submitted' ? t('btn_view_submission') : t('btn_submit_report')}
                 </Link>
               </div>
             </div>

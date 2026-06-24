@@ -15,12 +15,14 @@ import { fetchPersonnelById, fetchSquadWithMembers, fetchApplicationByCodename }
 import { getSession, formatTimestamp, getStatusColors, getStatusVisual } from '@/lib/utils';
 import { usePersonnelRecord } from '@/lib/hooks/useRealtime';
 import { Application, Personnel, Squad } from '@/lib/supabase';
+import { useI18n } from '@/lib/i18n';
 
 type LoadPhase = 'booting' | 'decrypting' | 'ready' | 'error';
 
 export default function ProfilePage() {
   const { id }   = useParams<{ id: string }>();
   const router   = useRouter();
+  const { t } = useI18n();
 
   const [phase,     setPhase]     = useState<LoadPhase>('booting');
   const [personnel, setPersonnel] = useState<Personnel | null>(null);
@@ -100,16 +102,14 @@ export default function ProfilePage() {
   // ── Error / Not found ──
   if (phase === 'error' || !personnel) {
     return (
-      <Layout title="RECORD NOT FOUND" subtitle="ERROR 404">
+      <Layout title={t('record_not_found')} subtitle="ERROR 404">
         <div className="py-12 max-w-sm mx-auto text-center space-y-4">
           <p className="font-mono text-xs text-red-400">
-            Personnel record <span className="text-text">{id}</span> could not be located.
+            Personnel record <span className="text-text">{id}</span> {t('record_error_desc')}
           </p>
-          <p className="font-mono text-[10px] text-text-muted">
-            The record may have been purged, archived, or the ID is incorrect.
-          </p>
+          <p className="font-mono text-[10px] text-text-muted">{t('record_purged')}</p>
           <button onClick={() => router.push('/access')} className="mcb-btn-ghost mx-auto">
-            ← RETURN
+            {t('btn_return_back')}
           </button>
         </div>
       </Layout>
@@ -130,7 +130,7 @@ export default function ProfilePage() {
           <div className="relative z-10 p-5 min-h-52 flex flex-col justify-between">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-[10px] text-text-muted tracking-[0.35em] uppercase">Status Banner</p>
+                <p className="font-mono text-[10px] text-text-muted tracking-[0.35em] uppercase">{t('status_banner')}</p>
                 <p className="font-sans text-3xl font-bold tracking-[0.2em] uppercase text-text">{personnel.codename}</p>
               </div>
               <PersonnelStatusBadge status={personnel.status} pulse={personnel.status === 'active'} />
@@ -163,7 +163,7 @@ export default function ProfilePage() {
             </div>
             {changed && (
               <p className="font-mono text-[9px] text-accent mt-1 animate-blink tracking-widest">
-                ● LIVE UPDATE
+                {t('live_update')}
               </p>
             )}
           </div>
@@ -180,7 +180,7 @@ export default function ProfilePage() {
               <DataField label="FULL NAME"     value={personnel.full_name} />
               <DataField label="BUREAU ID"     value={personnel.id} accent />
               <DataField label="ROLE"          value={personnel.role} />
-              <DataField label="SQUAD"         value={squad?.name ?? 'UNASSIGNED'} />
+              <DataField label={t('squad_section')} value={squad?.name ?? t('unassigned')} />
             </div>
           </div>
 
@@ -188,22 +188,22 @@ export default function ProfilePage() {
 
         {/* Status history / log panel */}
         <div className="mcb-panel p-5">
-          <p className="mcb-section-header">STATUS LOG</p>
+          <p className="mcb-section-header">{t('status_log')}</p>
           <div className="space-y-2">
             <LogEntry
               time={formatTimestamp(personnel.created_at)}
-              event="Personnel record created"
+              event={t('record_created')}
               type="info"
             />
             <LogEntry
               time={formatTimestamp(personnel.created_at)}
-              event={`Status assigned: ${personnel.status.toUpperCase()}`}
+              event={`${t('status_assigned')} ${personnel.status.toUpperCase()}`}
               type={personnel.status === 'active' ? 'success' : 'warning'}
             />
             {personnel.status !== 'active' && (
               <LogEntry
                 time="[CLASSIFIED]"
-                event={`Status changed to ${personnel.status.toUpperCase()} — details redacted`}
+                event={`${t('status_changed')} ${personnel.status.toUpperCase()} ${t('details_redacted')}`}
                 type="warning"
               />
             )}
@@ -213,7 +213,7 @@ export default function ProfilePage() {
         {/* Squad panel */}
         {squad && (
           <div className="mcb-panel p-5">
-            <p className="mcb-section-header">SQUAD — {squad.name}</p>
+            <p className="mcb-section-header">{t('squad_section')} — {squad.name}</p>
             <p className="font-mono text-xs text-text-dim mb-4">{squad.description}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {(squad.personnel ?? []).map(member => (
@@ -225,23 +225,22 @@ export default function ProfilePage() {
 
         {isOwn && application && (
           <div className="mcb-panel p-5 space-y-4">
-            <p className="mcb-section-header">APPLICATION RECORD</p>
+            <p className="mcb-section-header">{t('application_record')}</p>
             <div className="grid gap-4 sm:grid-cols-2">
-              <DataField label="ROLE APPLIED" value={application.role_applied} />
-              <DataField label="APPLICATION STATUS" value={application.status.toUpperCase()} accent />
+              <DataField label={t('label_role_applied')} value={application.role_applied} />
+              <DataField label={t('label_app_status')} value={application.status.toUpperCase()} accent />
             </div>
-            <InfoBlock label="BACKGROUND STORY" value={application.background_story} />
-            <InfoBlock label="SKILLS" value={application.skills} />
-            <InfoBlock label="NOTES" value={application.notes || '—'} />
+            <InfoBlock label={t('label_bg_story')} value={application.background_story} />
+            <InfoBlock label={t('label_app_skills')} value={application.skills} />
+            <InfoBlock label={t('label_app_notes')} value={application.notes || '—'} />
             <RecordImage src={application.image_url} alt={`${application.codename} application evidence`} emptyLabel="No application image uploaded" />
           </div>
         )}
 
-        {/* Classified footer */}
         {isOwn && (
           <div className="border border-accent/20 bg-accent/5 p-3 font-mono text-[10px] text-text-muted">
-            <p>▶ You are viewing your own personnel file.</p>
-            <p>Some information may be redacted per clearance level.</p>
+            <p>{t('own_file_note1')}</p>
+            <p>{t('own_file_note2')}</p>
           </div>
         )}
 

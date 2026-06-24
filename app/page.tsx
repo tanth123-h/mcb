@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getSession, generateBootLogs } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 /** Prevents IndexSizeError — always returns a radius >= min */
 function safeR(r: number, min = 0.1): number {
@@ -19,6 +20,7 @@ export default function LandingPage() {
   const [booting, setBooting] = useState(true);
   const [logs,    setLogs]    = useState<string[]>([]);
   const [time,    setTime]    = useState('');
+  const { t } = useI18n();
 
   useEffect(() => {
     const s = getSession();
@@ -178,14 +180,14 @@ export default function LandingPage() {
       <div className={`relative flex-1 min-h-[70vh] flex flex-col items-center justify-center transition-opacity duration-700 ${booting ? 'opacity-0' : 'opacity-100'}`}>
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
         <div className="relative z-10 text-center px-4 space-y-4">
-          <p className="font-mono text-[10px] tracking-[0.6em] text-red-400/70 uppercase">⚠ CLASSIFIED TRANSMISSION</p>
+          <p className="font-mono text-[10px] tracking-[0.6em] text-red-400/70 uppercase">{t('classified_transmission')}</p>
           <h1 className="font-sans text-5xl sm:text-7xl font-bold tracking-[0.12em] uppercase leading-none">
-            MOONFALL<br />
-            <span className="text-accent">INCIDENT</span><br />
-            <span className="text-text-muted text-3xl sm:text-4xl">DAY 0</span>
+            {t('moonfall')}<br />
+            <span className="text-accent">{t('incident')}</span><br />
+            <span className="text-text-muted text-3xl sm:text-4xl">{t('day0')}</span>
           </h1>
           <p className="font-mono text-xs text-text-muted tracking-[0.35em] uppercase">
-            MOONFALL CONTAINMENT BUREAU // GLOBAL AUTHORITY
+            {t('global_authority')}
           </p>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-bg to-transparent pointer-events-none" />
@@ -194,12 +196,12 @@ export default function LandingPage() {
       <div className={`relative z-10 transition-opacity duration-700 delay-300 ${booting ? 'opacity-0' : 'opacity-100'}`}>
         <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
           <div className="border border-red-500/20 bg-red-500/5 p-5 space-y-3">
-            <p className="font-mono text-[10px] text-red-400/70 tracking-widest">FILE: INCIDENT-REPORT-001 // CLEARANCE LEVEL: OMEGA</p>
+            <p className="font-mono text-[10px] text-red-400/70 tracking-widest">{t('incident_report')}</p>
             <p className="font-mono text-xs text-text-dim leading-relaxed">
-              On Day 0, the Moon left its orbit. Standard physics did not apply. There was no extinction event — only something <span className="text-text">far worse</span>. What emerged from the impact site defied every model, every simulation, every assumption we had about the boundaries of the natural world.
+              {t('incident_body1')} <span className="text-text">{t('far_worse')}</span>{t('incident_body2')}
             </p>
             <p className="font-mono text-xs text-text-dim leading-relaxed">
-              The Bureau was formed in the weeks that followed. Not to save the world — <span className="text-accent">to contain it.</span>
+              {t('incident_body3')} <span className="text-accent">{t('to_contain')}</span>
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -208,15 +210,15 @@ export default function LandingPage() {
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-accent/30" />
           </div>
           <div className="space-y-3">
-            <Link href="/lore" className="mcb-btn-primary w-full block text-center py-3 tracking-[0.3em]">▶ ACCESS CLASSIFIED FILES</Link>
+            <Link href="/lore" className="mcb-btn-primary w-full block text-center py-3 tracking-[0.3em]">{t('btn_access_files')}</Link>
             <div className="grid grid-cols-3 gap-2">
-              <Link href="/moonfall" className="mcb-btn-ghost text-center text-[10px]">INCIDENT LOG</Link>
-              <Link href="/apply"    className="mcb-btn-ghost text-center text-[10px]">APPLY</Link>
-              <Link href="/access"   className="mcb-btn-ghost text-center text-[10px]">PERSONNEL</Link>
+              <Link href="/moonfall" className="mcb-btn-ghost text-center text-[10px]">{t('btn_incident_log')}</Link>
+              <Link href="/apply"    className="mcb-btn-ghost text-center text-[10px]">{t('btn_apply')}</Link>
+              <Link href="/access"   className="mcb-btn-ghost text-center text-[10px]">{t('btn_personnel')}</Link>
             </div>
           </div>
           <div className="panel p-3 grid grid-cols-3 gap-2 text-center">
-            {[['SYS INTEGRITY','STABLE','text-green-400'],['CONTAINMENT WALL','HOLDING','text-accent'],['THREAT LEVEL','CRITICAL','text-red-400']].map(([l,v,c])=>(
+            {([[t('sys_integrity'),t('stable'),'text-green-400'],[t('containment_wall'),t('holding'),'text-accent'],[t('threat_level'),t('critical'),'text-red-400']] as [string,string,string][]).map(([l,v,c])=>(
               <div key={l}><p className="font-mono text-[8px] text-text-muted tracking-widest mb-1">{l}</p><p className={`font-mono text-[10px] font-bold ${c}`}>{v}</p></div>
             ))}
           </div>

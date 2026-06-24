@@ -9,6 +9,9 @@ import { Share_Tech_Mono, Rajdhani } from 'next/font/google';
 import RealtimeToast from '@/components/RealtimeToast';
 import SoundToggle   from '@/components/SoundToggle';
 import SoundInit     from '@/components/SoundInit';
+import { I18nProvider } from '@/lib/i18n';
+import LangToggle from '@/components/LangToggle';
+import SystemClock from '@/components/SystemClock';
 import './globals.css';
 
 const mono = Share_Tech_Mono({
@@ -60,41 +63,34 @@ export default function RootLayout({
           <div className="absolute bottom-2 right-2 w-6 h-6 border-b border-r border-accent/30" />
         </div>
 
-        {/* System status bar — top */}
-        <div className="fixed top-0 left-0 right-0 z-40 h-7 bg-bg/80 backdrop-blur border-b border-border flex items-center justify-between px-6 font-mono text-[10px] text-text-muted">
-          <span>MCB-SYS v4.2.1 // RESTRICTED ACCESS</span>
-          <span className="hidden sm:flex items-center gap-4">
-            <span className="text-green-400/70">■ UPLINK STABLE</span>
-            <span>ENC: AES-256</span>
-            <SoundToggle />
-            <SystemClock />
-          </span>
-        </div>
+        <I18nProvider>
+          {/* System status bar — top */}
+          <div className="fixed top-0 left-0 right-0 z-40 h-7 bg-bg/80 backdrop-blur border-b border-border flex items-center justify-between px-6 font-mono text-[10px] text-text-muted">
+            <span>MCB-SYS v4.2.1 // RESTRICTED ACCESS</span>
+            <span className="hidden sm:flex items-center gap-4">
+              <span className="text-green-400/70">■ UPLINK STABLE</span>
+              <span>ENC: AES-256</span>
+              <SoundToggle />
+              <LangToggle />
+              <SystemClock />
+            </span>
+          </div>
 
-        <main className="pt-7">{children}</main>
+          <main className="pt-7">{children}</main>
 
-        {/* Real-time broadcast notifications */}
-        <RealtimeToast />
+          {/* Real-time broadcast notifications */}
+          <RealtimeToast />
 
-        {/* Sound engine initializer — wires global keypress sounds */}
-        <SoundInit />
+          {/* Sound engine initializer — wires global keypress sounds */}
+          <SoundInit />
 
-        {/* Footer bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-40 h-6 bg-bg/80 backdrop-blur border-t border-border flex items-center justify-between px-6 font-mono text-[10px] text-text-muted">
-          <span>MOONFALL CONTAINMENT BUREAU // INTERNAL USE ONLY</span>
-          <span className="hidden sm:block">CLASSIFICATION: TOP SECRET</span>
-        </div>
+          {/* Footer bar */}
+          <div className="fixed bottom-0 left-0 right-0 z-40 h-6 bg-bg/80 backdrop-blur border-t border-border flex items-center justify-between px-6 font-mono text-[10px] text-text-muted">
+            <span>MOONFALL CONTAINMENT BUREAU // INTERNAL USE ONLY</span>
+            <span className="hidden sm:block">CLASSIFICATION: TOP SECRET</span>
+          </div>
+        </I18nProvider>
       </body>
     </html>
-  );
-}
-
-/** Client-side clock component */
-function SystemClock() {
-  // Static server render; hydration upgrades it via CSS
-  return (
-    <span suppressHydrationWarning>
-      {new Date().toISOString().substring(0, 19).replace('T', ' ')} UTC
-    </span>
   );
 }

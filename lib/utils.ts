@@ -24,7 +24,11 @@ export function saveSession(p: Personnel): void {
 }
 export function getSession(): MCBSession | null {
   if (typeof window === 'undefined') return null;
-  try { return JSON.parse(localStorage.getItem(SESSION_KEY) ?? ''); } catch { return null; }
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
 }
 export function clearSession(): void {
   if (typeof window === 'undefined') return;
@@ -64,23 +68,30 @@ export function getStatusColors(status: Personnel['status']) {
   return m[status] ?? m.active;
 }
 export function getAppStatusColors(status: 'pending'|'accepted'|'rejected') {
-  return { pending:{text:'text-yellow-400',bg:'bg-yellow-400/10'}, accepted:{text:'text-green-400',bg:'bg-green-400/10'}, rejected:{text:'text-red-400',bg:'bg-red-400/10'} }[status];
+  return (
+    { pending:{text:'text-yellow-400',bg:'bg-yellow-400/10'}, accepted:{text:'text-green-400',bg:'bg-green-400/10'}, rejected:{text:'text-red-400',bg:'bg-red-400/10'} }[status]
+    ?? { text:'text-text-muted', bg:'bg-border/20' }
+  );
 }
 export function getTaskStatusColors(status: TaskStatus | SubmissionStatus) {
-  return {
-    pending:     { text:'text-yellow-400', bg:'bg-yellow-400/10' },
-    in_progress: { text:'text-blue-400',   bg:'bg-blue-400/10' },
-    submitted:   { text:'text-accent',     bg:'bg-accent/10' },
-    accepted:    { text:'text-green-400',  bg:'bg-green-400/10' },
-    rejected:    { text:'text-red-400',    bg:'bg-red-400/10' },
-  }[status];
+  return (
+    {
+      pending:     { text:'text-yellow-400', bg:'bg-yellow-400/10' },
+      in_progress: { text:'text-blue-400',   bg:'bg-blue-400/10' },
+      submitted:   { text:'text-accent',     bg:'bg-accent/10' },
+      accepted:    { text:'text-green-400',  bg:'bg-green-400/10' },
+      rejected:    { text:'text-red-400',    bg:'bg-red-400/10' },
+    }[status] ?? { text:'text-text-muted', bg:'bg-border/20' }
+  );
 }
 export function getTaskPriorityColors(priority: TaskPriority) {
-  return {
-    low:    { text:'text-text-muted', bg:'bg-border/20' },
-    medium: { text:'text-yellow-400', bg:'bg-yellow-400/10' },
-    high:   { text:'text-red-400', bg:'bg-red-400/10' },
-  }[priority];
+  return (
+    {
+      low:    { text:'text-text-muted', bg:'bg-border/20' },
+      medium: { text:'text-yellow-400', bg:'bg-yellow-400/10' },
+      high:   { text:'text-red-400',    bg:'bg-red-400/10' },
+    }[priority] ?? { text:'text-text-muted', bg:'bg-border/20' }
+  );
 }
 export function getTaskTypeLabel(type: TaskType) {
   return type === 'research' ? 'RESEARCH' : 'MISSION';

@@ -103,6 +103,11 @@ body {
     @apply bg-surface border border-border rounded-sm;
   }
 
+  /* Alias for shorthand usage throughout pages */
+  .panel {
+    @apply bg-surface border border-border rounded-sm;
+  }
+
   /* Section headers */
   .mcb-section-header {
     @apply font-mono text-xs text-text-muted tracking-widest uppercase

@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Layout from '@/components/Layout';
+import { useI18n } from '@/lib/i18n';
 
 const TIMELINE = [
   { day: 'DAY 0',   label: 'THE IMPACT',           status: 'CONFIRMED', color: 'text-red-400',    border: 'border-red-400/30',
@@ -87,19 +88,18 @@ The truth behind the Moonfall event remains unknown. Personnel are advised to li
 
 export default function LorePage() {
   const [openFile, setOpenFile] = useState<string | null>('FILE-001');
+  const { t } = useI18n();
 
   return (
-    <Layout title="CLASSIFIED FILES" subtitle="// BUREAU ARCHIVE — CLEARANCE REQUIRED" classified maxWidth="lg">
+    <Layout title={t('lore_title')} subtitle={t('lore_subtitle')} classified maxWidth="lg">
       <div className="py-4 space-y-6">
 
-        {/* Top warning */}
         <div className="border border-red-500/25 bg-red-500/5 p-3 font-mono text-[10px] text-red-400/70 leading-relaxed">
-          WARNING: Unauthorized access to these files is a violation of Bureau Directive 12-F. All access attempts are logged and traced. You have been identified.
+          {t('warning_unauthorized')}
         </div>
 
-        {/* Timeline */}
         <div className="panel p-5">
-          <p className="mcb-section-header">INCIDENT TIMELINE — MOONFALL EVENT</p>
+          <p className="mcb-section-header">{t('timeline_title')}</p>
           <div className="space-y-3">
             {TIMELINE.map((e, i) => (
               <div key={i} className={`border-l-2 ${e.border} pl-4 py-1`}>
@@ -114,9 +114,8 @@ export default function LorePage() {
           </div>
         </div>
 
-        {/* Document files */}
         <div className="space-y-3">
-          <p className="mcb-section-header">BUREAU DOCUMENTS — RESTRICTED ARCHIVE</p>
+          <p className="mcb-section-header">{t('documents_title')}</p>
           {FILES.map(file => (
             <div key={file.id} className="panel overflow-hidden">
               {/* File header */}
@@ -181,18 +180,18 @@ export default function LorePage() {
         <div className="space-y-3 pb-4">
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-accent/30" />
-            <span className="font-mono text-[9px] text-text-muted tracking-widest">END OF PUBLIC ARCHIVE</span>
+            <span className="font-mono text-[9px] text-text-muted tracking-widest">{t('end_public_archive')}</span>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-accent/30" />
           </div>
           <p className="font-mono text-[11px] text-text-dim text-center">
-            You are applying to a classified global organization.<br />
-            <span className="text-text">The Bureau does not forget. The Bureau does not forgive mistakes.</span>
+            {t('lore_cta1')}<br />
+            <span className="text-text">{t('lore_cta2')}</span>
           </p>
           <Link href="/apply" className="mcb-btn-primary w-full block text-center py-3 tracking-[0.3em]">
-            ▶ PROCEED TO APPLICATION
+            {t('btn_proceed_application')}
           </Link>
           <Link href="/moonfall" className="mcb-btn-ghost w-full block text-center text-[10px]">
-            VIEW INCIDENT VISUALIZATION
+            {t('btn_view_incident')}
           </Link>
         </div>
       </div>

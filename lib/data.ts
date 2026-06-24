@@ -91,8 +91,9 @@ export async function fetchApplicationByCodename(codename: string): Promise<Resu
       .eq('codename', codename.toUpperCase())
       .order('created_at', { ascending: false })
       .limit(1)
-      .single();
-    if (error || !data) return { data: null, error: error?.message ?? 'Not found' };
+      .maybeSingle();
+    if (error) return { data: null, error: error.message };
+    if (!data) return { data: null, error: 'Not found' };
     return { data: data as Application, error: null };
   } catch (e) {
     return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };

@@ -7,6 +7,7 @@ import { TaskPriorityBadge, TaskStatusBadge, TaskTypeBadge } from '@/components/
 import { fetchTaskById, submitTaskReport } from '@/lib/data';
 import { Task, TaskResult } from '@/lib/supabase';
 import { formatTimestamp, getSession } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 const RESULTS: TaskResult[] = ['success', 'failure', 'inconclusive'];
 
@@ -14,6 +15,7 @@ export default function SubmitTaskPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const session = useMemo(() => getSession(), []);
+  const { t } = useI18n();
 
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,10 +87,10 @@ export default function SubmitTaskPage() {
   if (!session) return null;
 
   return (
-    <Layout title="SUBMIT REPORT" subtitle="TASK COMPLETION DOSSIER" classified maxWidth="lg">
+    <Layout title={t('submit_report_title')} subtitle={t('submit_report_subtitle')} classified maxWidth="lg">
       <div className="py-6 space-y-4">
         {loading || !task ? (
-          <p className="font-mono text-xs text-text-muted py-10 text-center animate-blink">Decrypting task file...</p>
+          <p className="font-mono text-xs text-text-muted py-10 text-center animate-blink">{t('decrypting_task')}</p>
         ) : (
           <>
             <div className="mcb-panel p-5 space-y-3">
@@ -104,49 +106,48 @@ export default function SubmitTaskPage() {
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <InfoBlock label="Description" value={task.description} />
-                <InfoBlock label="Objective" value={task.objective} />
+                <InfoBlock label={t('description')} value={task.description} />
+                <InfoBlock label={t('objective')} value={task.objective} />
               </div>
             </div>
 
             <form onSubmit={handleSubmit} className="mcb-panel p-5 space-y-4">
-              <p className="mcb-section-header">REPORT SUBMISSION</p>
+              <p className="mcb-section-header">{t('report_submission')}</p>
 
-              <Field label="Report Title">
+              <Field label={t('label_report_title')}>
                 <input className="mcb-input" value={reportTitle} onChange={e => setReportTitle(e.target.value)} required />
               </Field>
 
-              <Field label="Findings / Summary">
+              <Field label={t('label_findings')}>
                 <textarea className="mcb-input resize-none" rows={5} value={findings} onChange={e => setFindings(e.target.value)} required />
               </Field>
 
-              <Field label="Actions Taken">
+              <Field label={t('label_actions')}>
                 <textarea className="mcb-input resize-none" rows={4} value={actionsTaken} onChange={e => setActionsTaken(e.target.value)} required />
               </Field>
 
-              <Field label="Result">
+              <Field label={t('label_result')}>
                 <select className="mcb-input" value={result} onChange={e => setResult(e.target.value as TaskResult)}>
                   {RESULTS.map(item => <option key={item} value={item}>{item.toUpperCase()}</option>)}
                 </select>
               </Field>
 
-              <Field label="Notes">
+              <Field label={t('label_report_notes')}>
                 <textarea className="mcb-input resize-none" rows={3} value={notes} onChange={e => setNotes(e.target.value)} />
               </Field>
 
-              <Field label="Proof Image (Optional)">
+              <Field label={t('label_proof_image')}>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   className="mcb-input file:mr-3 file:border-0 file:bg-transparent file:font-mono file:text-[10px] file:text-accent"
                   onChange={e => setImageFile(e.target.files?.[0] ?? null)}
                 />
-                <p className="font-mono text-[10px] text-text-muted mt-1">Uses Supabase Storage bucket `task-reports`.</p>
               </Field>
 
               {task.submission?.admin_feedback && (
                 <div className="border border-yellow-400/20 bg-yellow-400/5 p-3">
-                  <p className="font-mono text-[10px] text-yellow-400 tracking-widest">LAST REVIEW FEEDBACK</p>
+                  <p className="font-mono text-[10px] text-yellow-400 tracking-widest">{t('last_feedback')}</p>
                   <p className="font-mono text-[11px] text-text-dim mt-1">{task.submission.admin_feedback}</p>
                 </div>
               )}
@@ -159,9 +160,9 @@ export default function SubmitTaskPage() {
 
               <div className="flex gap-3">
                 <button type="submit" disabled={saving} className="mcb-btn-primary flex-1">
-                  {saving ? 'UPLINKING...' : '▶ SUBMIT REPORT'}
+                  {saving ? t('btn_uplinking') : t('btn_submit')}
                 </button>
-                <button type="button" onClick={() => router.push('/tasks')} className="mcb-btn-ghost flex-1">RETURN</button>
+                <button type="button" onClick={() => router.push('/tasks')} className="mcb-btn-ghost flex-1">{t('btn_return')}</button>
               </div>
             </form>
           </>
