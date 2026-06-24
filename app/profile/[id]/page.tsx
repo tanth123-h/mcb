@@ -7,11 +7,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Layout from '@/components/Layout';
 import { PersonnelStatusBadge } from '@/components/StatusBadge';
 import AvatarUpload from '@/components/AvatarUpload';
 import RecordImage from '@/components/RecordImage';
-import { fetchPersonnelById, fetchSquadWithMembers, fetchApplicationByCodename } from '@/lib/data';
+import { fetchPersonnelById, fetchSquadWithMembers, fetchApplicationByCodename, updateApplicationProfile } from '@/lib/data';
 import { getSession, formatTimestamp, getStatusColors, getStatusVisual } from '@/lib/utils';
 import { usePersonnelRecord } from '@/lib/hooks/useRealtime';
 import { Application, Personnel, Squad } from '@/lib/supabase';
@@ -186,7 +187,13 @@ export default function ProfilePage() {
               <DataField label="FULL NAME"           value={personnel.full_name} />
               <DataField label="BUREAU ID"           value={personnel.id} accent />
               <DataField label="ROLE"                value={personnel.role} />
-              <DataField label={t('squad_section')}  value={squad?.name ?? t('unassigned')} />
+              <div className="space-y-0.5">
+                <p className="font-mono text-[9px] text-text-muted tracking-widest">{t('squad_section')}</p>
+                {squad
+                  ? <Link href={`/squad/${squad.id}`} className="font-mono text-xs text-accent hover:text-text transition-colors font-medium">{squad.name} →</Link>
+                  : <p className="font-mono text-xs text-text-dim">{t('unassigned')}</p>
+                }
+              </div>
             </div>
             {isOwn && (
               <div className="pt-2 border-t border-border/40">
@@ -241,8 +248,10 @@ export default function ProfilePage() {
               <DataField label={t('label_app_status')} value={application.status.toUpperCase()} accent />
             </div>
             <InfoBlock label={t('label_bg_story')} value={application.background_story} />
-            <InfoBlock label={t('label_app_skills')} value={application.skills} />
-            <InfoBlock label={t('label_app_notes')} value={application.notes || '—'} />
+            <EditableProfileFields
+              application={application}
+              onSave={(updated) => setApplication(prev => prev ? { ...prev, ...updated } : prev)}
+            />
             <RecordImage src={application.image_url} alt={`${application.codename} application evidence`} emptyLabel="No application image uploaded" />
           </div>
         )}
@@ -333,6 +342,86 @@ function InfoBlock({ label, value }: { label: string; value: string }) {
     <div className="border border-border/60 p-3 space-y-1">
       <p className="font-mono text-[10px] text-text-muted tracking-widest uppercase">{label}</p>
       <p className="font-mono text-[11px] text-text-dim whitespace-pre-wrap">{value}</p>
+    </div>
+  );
+}
+
+function EditableProfileFields({
+  application,
+  onSave,
+}: {
+  application: import('@/lib/supabase').Application;
+  onSave: (updated: { skills?: string; notes?: string }) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [skills, setSkills] = useState(application.skills ?? '');
+  const [notes, setNotes]   = useState(application.notes ?? '');
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg]       = useState<string | null>(null);
+
+  async function save() {
+    setSaving(true);
+    setMsg(null);
+    const { error } = await updateApplicationProfile(application.id, { skills, notes });
+    setSaving(false);
+    if (error) { setMsg(`Error: ${error}`); return; }
+    onSave({ skills, notes });
+    setEditing(false);
+    setMsg('Saved.');
+    setTimeout(() => setMsg(null), 2000);
+  }
+
+  if (!editing) {
+    return (
+      <div className="space-y-3">
+        <InfoBlock label="SKILLS" value={application.skills || '—'} />
+        <InfoBlock label="NOTES" value={application.notes || '—'} />
+        <button
+          onClick={() => setEditing(true)}
+          className="mcb-btn-ghost text-[10px] py-1.5 px-3"
+        >
+          ✎ EDIT SKILLS & NOTES
+        </button>
+        {msg && <p className="font-mono text-[10px] text-green-400">{msg}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 border border-accent/20 bg-accent/5 p-4">
+      <p className="font-mono text-[10px] text-accent tracking-widest">EDITING PROFILE</p>
+
+      <div className="space-y-1">
+        <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">SKILLS</label>
+        <input
+          className="mcb-input text-xs py-1.5"
+          value={skills}
+          onChange={e => setSkills(e.target.value)}
+          placeholder="Comma-separated skills..."
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="font-mono text-[9px] text-text-muted tracking-widest uppercase">NOTES</label>
+        <textarea
+          className="mcb-input text-xs resize-none"
+          rows={3}
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Additional notes or bio..."
+        />
+      </div>
+
+      {msg && <p className="font-mono text-[10px] text-red-400">{msg}</p>}
+
+      <div className="flex gap-2">
+        <button onClick={save} disabled={saving} className="mcb-btn-primary text-[10px] py-1.5 px-4">
+          {saving ? '▌ SAVING...' : '▶ SAVE'}
+        </button>
+        <button onClick={() => { setEditing(false); setSkills(application.skills ?? ''); setNotes(application.notes ?? ''); }} className="mcb-btn-ghost text-[10px] py-1.5 px-3">
+          CANCEL
+        </button>
+      </div>
     </div>
   );
 }

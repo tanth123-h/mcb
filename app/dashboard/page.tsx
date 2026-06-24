@@ -62,7 +62,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4">
 
           {/* My account card */}
-          <Link href={`/profile/${session.id}`} className="group mcb-panel p-5 flex gap-4 items-start hover:border-accent/50 transition-colors relative overflow-hidden">
+          <Link href={`/profile/${session.id}`} className="group mcb-panel mcb-card-hover p-5 flex gap-4 items-start hover:border-accent/50 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"/>
             <div className="relative z-10 flex gap-4 items-start w-full">
               {/* Avatar placeholder / real */}
@@ -165,8 +165,7 @@ function PersonnelCard({ personnel, isSelf }: { personnel: Personnel; isSelf: bo
     <Link
       href={`/profile/${personnel.id}`}
       className={`
-        group mcb-panel p-4 flex gap-3 items-start
-        hover:border-accent/40 transition-all duration-200
+        group mcb-panel mcb-card-hover p-4 flex gap-3 items-start
         ${isSelf ? 'border-accent/30 bg-accent/5' : ''}
       `}
     >

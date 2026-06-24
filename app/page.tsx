@@ -22,6 +22,8 @@ export default function LandingPage() {
   const [time,    setTime]    = useState('');
   const { t } = useI18n();
 
+  const [glitched, setGlitched] = useState(false);
+
   useEffect(() => {
     const s = getSession();
     if (s) { router.replace('/dashboard'); return; }
@@ -30,7 +32,7 @@ export default function LandingPage() {
     let i = 0;
     const iv = setInterval(() => {
       if (i < allLogs.length) setLogs(p => [...p, allLogs[i++]]);
-      else { clearInterval(iv); setBooting(false); }
+      else { clearInterval(iv); setBooting(false); setTimeout(() => setGlitched(true), 400); }
     }, 320);
     const clk = setInterval(() =>
       setTime(new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'), 1000);
@@ -151,7 +153,7 @@ export default function LandingPage() {
 
         <div className="relative text-center px-4 space-y-5" style={{ zIndex: 3 }}>
           <p className="font-mono text-[10px] tracking-[0.6em] text-red-400/70 uppercase">{t('classified_transmission')}</p>
-          <h1 className="font-sans text-5xl sm:text-8xl font-bold tracking-[0.10em] uppercase leading-none drop-shadow-[0_0_40px_rgba(122,162,247,0.15)]">
+          <h1 className={`font-sans text-5xl sm:text-8xl font-bold tracking-[0.10em] uppercase leading-none drop-shadow-[0_0_40px_rgba(122,162,247,0.15)] ${glitched ? 'animate-glitch' : ''}`}>
             {t('moonfall')}<br />
             <span className="text-accent">{t('incident')}</span><br />
             <span className="text-text-muted text-3xl sm:text-5xl font-light tracking-[0.2em]">{t('day0')}</span>

@@ -100,6 +100,21 @@ export async function fetchApplicationByCodename(codename: string): Promise<Resu
   }
 }
 
+export async function updateApplicationProfile(
+  applicationId: string,
+  fields: { notes?: string; skills?: string }
+): Promise<{ error: string | null }> {
+  try {
+    const { error } = await supabase
+      .from('applications')
+      .update(fields)
+      .eq('id', applicationId);
+    return { error: error?.message ?? null };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
 export async function acceptApplication(
   app: Application,
   squadId?: string
@@ -239,6 +254,29 @@ export async function createSquad(
     return { data: data as Squad, error: null };
   } catch (e) {
     return { data: null, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+/** Returns completed task counts keyed by personnel_id for members of a squad */
+export async function fetchTaskCountsForPersonnel(
+  personnelIds: string[]
+): Promise<{ data: Record<string, { total: number; completed: number }>; error: string | null }> {
+  if (!personnelIds.length) return { data: {}, error: null };
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('assigned_to, status')
+      .in('assigned_to', personnelIds);
+    if (error) return { data: {}, error: error.message };
+    const counts: Record<string, { total: number; completed: number }> = {};
+    for (const row of data ?? []) {
+      if (!counts[row.assigned_to]) counts[row.assigned_to] = { total: 0, completed: 0 };
+      counts[row.assigned_to].total++;
+      if (row.status === 'accepted') counts[row.assigned_to].completed++;
+    }
+    return { data: counts, error: null };
+  } catch (e) {
+    return { data: {}, error: e instanceof Error ? e.message : 'Unknown error' };
   }
 }
 

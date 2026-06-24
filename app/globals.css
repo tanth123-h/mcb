@@ -108,6 +108,11 @@ body {
     @apply bg-surface border border-border rounded-sm;
   }
 
+  /* Hover lift — add to any panel/card that needs lift on hover */
+  .mcb-card-hover {
+    @apply transition-all duration-200 hover:-translate-y-px hover:border-accent/30 hover:shadow-[0_4px_20px_rgba(122,162,247,0.08)];
+  }
+
   /* Section headers */
   .mcb-section-header {
     @apply font-mono text-xs text-text-muted tracking-widest uppercase
