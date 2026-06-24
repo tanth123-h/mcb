@@ -1,18 +1,18 @@
 /**
- * app/page.tsx — MCB Landing Page v2
- * BUG FIX: All canvas arc() calls guarded with safeR() — no negative/zero radii.
+ * app/page.tsx — MCB Landing Page v3
+ * - Full-viewport star field
+ * - Logged-in users → /dashboard
+ * - World map decoration on landing
  */
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import WorldMap from '@/components/WorldMap';
 import { getSession, generateBootLogs } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n';
 
-/** Prevents IndexSizeError — always returns a radius >= min */
-function safeR(r: number, min = 0.1): number {
-  return Math.max(min, Math.abs(r));
-}
+function safeR(r: number, min = 0.1): number { return Math.max(min, Math.abs(r)); }
 
 export default function LandingPage() {
   const router    = useRouter();
@@ -24,7 +24,8 @@ export default function LandingPage() {
 
   useEffect(() => {
     const s = getSession();
-    if (s) { router.replace(`/profile/${s.id}`); return; }
+    if (s) { router.replace('/dashboard'); return; }
+
     const allLogs = generateBootLogs(5);
     let i = 0;
     const iv = setInterval(() => {
@@ -41,114 +42,77 @@ export default function LandingPage() {
     if (booting) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const canvasEl = canvas;
-    const context = canvasEl.getContext('2d');
-    if (!context) return;
-    const ctx: CanvasRenderingContext2D = context;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
     let animId: number;
-    let moonY    = -120;
-    let impacted  = false;
+    let moonY = -120;
+    let impacted = false;
     let glowPulse = 0;
-    let mounted   = true;
-
-    // Stars: radius guaranteed >= 0.3
-    const stars = Array.from({ length: 180 }, () => ({
-      x: Math.random() * canvasEl.width,
-      y: Math.random() * canvasEl.height * 0.7,
-      r: safeR(Math.random() * 1.5, 0.3),
-      a: Math.random(),
-    }));
+    let mounted = true;
 
     function resize() {
-      canvasEl.width  = canvasEl.offsetWidth;
-      canvasEl.height = canvasEl.offsetHeight;
+      canvas!.width  = canvas!.offsetWidth;
+      canvas!.height = canvas!.offsetHeight;
     }
     resize();
     window.addEventListener('resize', resize);
 
     function draw() {
-      if (!mounted) return;
-      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-      const w = canvasEl.width, h = canvasEl.height;
+      if (!mounted || !ctx) return;
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      const w = canvas!.width, h = canvas!.height;
 
-      const sky = ctx.createLinearGradient(0, 0, 0, h);
-      sky.addColorStop(0, '#040810');
-      sky.addColorStop(1, '#0A0F14');
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, w, h);
-
-      stars.forEach(s => {
-        s.a += 0.005;
-        if (s.a > 1) s.a = 0;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, safeR(s.r), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(230,237,243,${0.3 + Math.sin(s.a) * 0.3})`;
-        ctx.fill();
-      });
-
-      const targetY = h * 0.38;
+      const targetY = h * 0.42;
       if (!impacted) {
         moonY += (targetY - moonY) * 0.008;
         if (Math.abs(moonY - targetY) < 1) impacted = true;
       }
       glowPulse += 0.015;
 
-      // glowR: sin oscillates ±8 around 80 — always positive, but safeR for safety
-      const glowR = safeR(80 + Math.sin(glowPulse) * 8, 10);
+      const glowR = safeR(70 + Math.sin(glowPulse) * 8, 10);
 
       // Glow halo
-      const grd = ctx.createRadialGradient(w / 2, moonY, safeR(glowR * 0.15, 1), w / 2, moonY, safeR(glowR * 2, 20));
-      grd.addColorStop(0, 'rgba(122,162,247,0.22)');
-      grd.addColorStop(0.5, 'rgba(122,162,247,0.06)');
+      const grd = ctx.createRadialGradient(w / 2, moonY, safeR(glowR * 0.15, 1), w / 2, moonY, safeR(glowR * 2.5, 20));
+      grd.addColorStop(0, 'rgba(122,162,247,0.18)');
+      grd.addColorStop(0.5, 'rgba(122,162,247,0.05)');
       grd.addColorStop(1, 'transparent');
       ctx.fillStyle = grd;
       ctx.beginPath();
-      ctx.arc(w / 2, moonY, safeR(glowR * 2, 20), 0, Math.PI * 2);
+      ctx.arc(w / 2, moonY, safeR(glowR * 2.5, 20), 0, Math.PI * 2);
       ctx.fill();
 
       // Moon body
-      const moonR = 62;
-      const mg = ctx.createRadialGradient(w / 2 - 18, moonY - 18, 5, w / 2, moonY, moonR);
-      mg.addColorStop(0, '#CBD5E1');
-      mg.addColorStop(0.4, '#94A3B8');
-      mg.addColorStop(1, '#475569');
+      const moonR = 56;
+      const mg = ctx.createRadialGradient(w / 2 - 16, moonY - 16, 4, w / 2, moonY, moonR);
+      mg.addColorStop(0, '#D0DAE8');
+      mg.addColorStop(0.4, '#8FA0B4');
+      mg.addColorStop(1, '#3E4F63');
       ctx.beginPath();
       ctx.arc(w / 2, moonY, moonR, 0, Math.PI * 2);
       ctx.fillStyle = mg;
       ctx.fill();
 
-      // Craters — all radii safe
+      // Craters
       ([
-        [w / 2 - 18, moonY - 12, 10],
-        [w / 2 + 20, moonY + 8,   7],
-        [w / 2 - 5,  moonY + 22,  5],
-        [w / 2 + 8,  moonY - 25,  4],
+        [w / 2 - 16, moonY - 10, 9],
+        [w / 2 + 18, moonY + 7,  6],
+        [w / 2 - 4,  moonY + 20, 4.5],
+        [w / 2 + 7,  moonY - 22, 3.5],
       ] as [number, number, number][]).forEach(([cx, cy, cr]) => {
         ctx.beginPath();
         ctx.arc(cx, cy, safeR(cr, 1), 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(30,41,59,0.5)';
+        ctx.fillStyle = 'rgba(25,35,50,0.45)';
         ctx.fill();
       });
 
-      // Impact effect
       if (impacted) {
         const cx = w / 2, cy = moonY + moonR;
-        ctx.strokeStyle = 'rgba(122,162,247,0.25)';
+        ctx.strokeStyle = 'rgba(122,162,247,0.2)';
         ctx.lineWidth = 1;
-        [[-40, 30], [-20, 50], [0, 60], [20, 50], [40, 30]].forEach(([dx, dy]) => {
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + dx, cy + dy);
-          ctx.stroke();
+        [[-38, 28], [-18, 48], [0, 56], [18, 48], [38, 28]].forEach(([dx, dy]) => {
+          ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dx, cy + dy); ctx.stroke();
         });
-        const impGrd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 60);
-        impGrd.addColorStop(0, 'rgba(122,162,247,0.08)');
-        impGrd.addColorStop(1, 'transparent');
-        ctx.fillStyle = impGrd;
-        ctx.beginPath();
-        ctx.arc(cx, cy, 60, 0, Math.PI * 2);
-        ctx.fill();
       }
 
       animId = requestAnimationFrame(draw);
@@ -164,6 +128,8 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-[calc(100vh-52px)] relative flex flex-col">
+
+      {/* Boot screen */}
       {booting && (
         <div className="fixed inset-0 z-20 bg-bg flex flex-col items-center justify-center p-6">
           <div className="w-full max-w-sm space-y-2">
@@ -177,25 +143,33 @@ export default function LandingPage() {
         </div>
       )}
 
-      <div className={`relative flex-1 min-h-[70vh] flex flex-col items-center justify-center transition-opacity duration-700 ${booting ? 'opacity-0' : 'opacity-100'}`}>
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
-        <div className="relative z-10 text-center px-4 space-y-4">
+      {/* Hero section */}
+      <div className={`relative flex-1 min-h-[72vh] flex flex-col items-center justify-center transition-opacity duration-700 ${booting ? 'opacity-0' : 'opacity-100'}`}
+        style={{ zIndex: 2 }}>
+        {/* Moon canvas — overlaid on star field */}
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" style={{ zIndex: 2 }} />
+
+        <div className="relative text-center px-4 space-y-5" style={{ zIndex: 3 }}>
           <p className="font-mono text-[10px] tracking-[0.6em] text-red-400/70 uppercase">{t('classified_transmission')}</p>
-          <h1 className="font-sans text-5xl sm:text-7xl font-bold tracking-[0.12em] uppercase leading-none">
+          <h1 className="font-sans text-5xl sm:text-8xl font-bold tracking-[0.10em] uppercase leading-none drop-shadow-[0_0_40px_rgba(122,162,247,0.15)]">
             {t('moonfall')}<br />
             <span className="text-accent">{t('incident')}</span><br />
-            <span className="text-text-muted text-3xl sm:text-4xl">{t('day0')}</span>
+            <span className="text-text-muted text-3xl sm:text-5xl font-light tracking-[0.2em]">{t('day0')}</span>
           </h1>
-          <p className="font-mono text-xs text-text-muted tracking-[0.35em] uppercase">
+          <p className="font-mono text-[10px] sm:text-xs text-text-muted tracking-[0.4em] uppercase">
             {t('global_authority')}
           </p>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-bg to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-bg to-transparent pointer-events-none" style={{ zIndex: 3 }} />
       </div>
 
-      <div className={`relative z-10 transition-opacity duration-700 delay-300 ${booting ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="max-w-2xl mx-auto px-6 py-10 space-y-8">
-          <div className="border border-red-500/20 bg-red-500/5 p-5 space-y-3">
+      {/* Content below hero */}
+      <div className={`relative transition-opacity duration-700 delay-300 ${booting ? 'opacity-0' : 'opacity-100'}`}
+        style={{ zIndex: 2 }}>
+
+        {/* Incident report */}
+        <div className="max-w-2xl mx-auto px-6 py-8 space-y-6">
+          <div className="border border-red-500/20 bg-red-500/5 p-5 space-y-3 backdrop-blur-sm">
             <p className="font-mono text-[10px] text-red-400/70 tracking-widest">{t('incident_report')}</p>
             <p className="font-mono text-xs text-text-dim leading-relaxed">
               {t('incident_body1')} <span className="text-text">{t('far_worse')}</span>{t('incident_body2')}
@@ -204,11 +178,15 @@ export default function LandingPage() {
               {t('incident_body3')} <span className="text-accent">{t('to_contain')}</span>
             </p>
           </div>
+
+          {/* Divider */}
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent to-accent/30" />
             <div className="w-1.5 h-1.5 rotate-45 bg-accent/50" />
             <div className="h-px flex-1 bg-gradient-to-l from-transparent to-accent/30" />
           </div>
+
+          {/* CTA buttons */}
           <div className="space-y-3">
             <Link href="/lore" className="mcb-btn-primary w-full block text-center py-3 tracking-[0.3em]">{t('btn_access_files')}</Link>
             <div className="grid grid-cols-3 gap-2">
@@ -217,13 +195,31 @@ export default function LandingPage() {
               <Link href="/access"   className="mcb-btn-ghost text-center text-[10px]">{t('btn_personnel')}</Link>
             </div>
           </div>
-          <div className="panel p-3 grid grid-cols-3 gap-2 text-center">
-            {([[t('sys_integrity'),t('stable'),'text-green-400'],[t('containment_wall'),t('holding'),'text-accent'],[t('threat_level'),t('critical'),'text-red-400']] as [string,string,string][]).map(([l,v,c])=>(
-              <div key={l}><p className="font-mono text-[8px] text-text-muted tracking-widest mb-1">{l}</p><p className={`font-mono text-[10px] font-bold ${c}`}>{v}</p></div>
+
+          {/* Status bar */}
+          <div className="panel p-3 grid grid-cols-3 gap-2 text-center backdrop-blur-sm">
+            {([[t('sys_integrity'),t('stable'),'text-green-400'],[t('containment_wall'),t('holding'),'text-accent'],[t('threat_level'),t('critical'),'text-red-400']] as [string,string,string][]).map(([l,v,c]) => (
+              <div key={l}>
+                <p className="font-mono text-[8px] text-text-muted tracking-widest mb-1">{l}</p>
+                <p className={`font-mono text-[10px] font-bold ${c}`}>{v}</p>
+              </div>
             ))}
+          </div>
+        </div>
+
+        {/* World map section */}
+        <div className="max-w-4xl mx-auto px-6 pb-10 space-y-3">
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-accent/20" />
+            <p className="font-mono text-[9px] text-text-muted tracking-[0.4em]">GLOBAL SECTOR OVERVIEW</p>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-accent/20" />
+          </div>
+          <div className="panel overflow-hidden backdrop-blur-sm">
+            <WorldMap className="h-52 sm:h-72" />
           </div>
           <p className="font-mono text-[9px] text-text-muted text-center">{time} // NODE-7 // SECTOR-OMEGA</p>
         </div>
+
       </div>
     </div>
   );

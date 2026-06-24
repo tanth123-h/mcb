@@ -33,6 +33,7 @@ export default function Layout({ children, title, subtitle, classified=false, ma
             <NavLink href="/moonfall" label={t('nav_incident')} active={pathname==='/moonfall'} />
             <NavLink href="/apply"    label={t('nav_apply')}    active={pathname==='/apply'} />
             <NavLink href="/access"   label={t('nav_access')}   active={pathname==='/access'} />
+            {session && <NavLink href="/dashboard" label="DASHBOARD" active={pathname==='/dashboard'} />}
             {session && <NavLink href={`/profile/${session.id}`} label={t('nav_profile')} active={pathname.startsWith('/profile')} />}
             {session && <NavLink href="/tasks" label={t('nav_tasks')} active={pathname.startsWith('/tasks')} />}
             {pathname.startsWith('/admin') && <NavLink href="/admin/tasks" label={t('nav_taskops')} active={pathname.startsWith('/admin/tasks')} />}

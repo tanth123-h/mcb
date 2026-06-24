@@ -12,6 +12,7 @@ import SoundInit     from '@/components/SoundInit';
 import { I18nProvider } from '@/lib/i18n';
 import LangToggle from '@/components/LangToggle';
 import SystemClock from '@/components/SystemClock';
+import StarField from '@/components/StarField';
 import './globals.css';
 
 const mono = Share_Tech_Mono({
@@ -64,6 +65,9 @@ export default function RootLayout({
         </div>
 
         <I18nProvider>
+          {/* Full-viewport star field — behind everything */}
+          <StarField />
+
           {/* System status bar — top */}
           <div className="fixed top-0 left-0 right-0 z-40 h-7 bg-bg/80 backdrop-blur border-b border-border flex items-center justify-between px-6 font-mono text-[10px] text-text-muted">
             <span>MCB-SYS v4.2.1 // RESTRICTED ACCESS</span>

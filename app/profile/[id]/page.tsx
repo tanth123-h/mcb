@@ -122,33 +122,45 @@ export default function ProfilePage() {
     <Layout title={personnel.codename} subtitle={`PERSONNEL FILE // ${personnel.id}`} classified maxWidth="lg">
       <div className="py-6 space-y-4 stagger">
 
-        <div className="relative overflow-hidden border border-border min-h-52">
+        {/* Hero banner — full-width status visual */}
+        <div className="relative overflow-hidden border border-border min-h-60 rounded-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={statusVisual.image} alt={personnel.status} className="absolute inset-0 w-full h-full object-cover" />
+          <img src={statusVisual.image} alt={personnel.status} className="absolute inset-0 w-full h-full object-cover opacity-60" />
           <div className={`absolute inset-0 bg-gradient-to-br ${statusVisual.panel}`} />
-          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/20 to-transparent" />
-          <div className="relative z-10 p-5 min-h-52 flex flex-col justify-between">
+          <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent" />
+
+          {/* Decorative scan lines on hero */}
+          <div className="absolute inset-0 bg-scanlines opacity-10 pointer-events-none" />
+
+          <div className="relative z-10 p-6 min-h-60 flex flex-col justify-between">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-mono text-[10px] text-text-muted tracking-[0.35em] uppercase">{t('status_banner')}</p>
-                <p className="font-sans text-3xl font-bold tracking-[0.2em] uppercase text-text">{personnel.codename}</p>
+                <p className="font-mono text-[9px] text-text-muted/70 tracking-[0.4em] uppercase mb-1">{t('status_banner')}</p>
+                <p className="font-sans text-4xl sm:text-5xl font-bold tracking-[0.15em] uppercase text-text drop-shadow-lg">
+                  {personnel.codename}
+                </p>
               </div>
               <PersonnelStatusBadge status={personnel.status} pulse={personnel.status === 'active'} />
             </div>
-            <div>
-              <p className={`font-sans text-4xl font-bold uppercase tracking-[0.25em] ${statusVisual.color}`}>
-                {personnel.status}
-              </p>
-              <p className="font-mono text-[10px] text-text-dim tracking-widest uppercase">{personnel.role}</p>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className={`font-sans text-5xl font-bold uppercase tracking-[0.2em] ${statusVisual.color} drop-shadow-lg`}>
+                  {personnel.status.toUpperCase()}
+                </p>
+                <p className="font-mono text-[10px] text-text-dim/80 tracking-widest uppercase mt-1">{personnel.role}</p>
+              </div>
+              <div className="text-right font-mono text-[9px] text-text-muted/60 space-y-0.5">
+                <p>{personnel.id}</p>
+                <p>ENROLLED {formatTimestamp(personnel.created_at).substring(0, 10)}</p>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Top card — Avatar + Core Info */}
-        <div className="mcb-panel p-5 flex flex-col sm:flex-row gap-5">
-
+        {/* Avatar + Core data card */}
+        <div className="mcb-panel p-5 flex flex-col sm:flex-row gap-6">
           {/* Avatar */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 space-y-2">
             <div className={`transition-all duration-300 ${changed ? 'ring-2 ring-accent ring-offset-2 ring-offset-bg' : ''}`}>
               <AvatarUpload
                 personnelId={personnel.id}
@@ -158,32 +170,30 @@ export default function ProfilePage() {
                 onUpload={(url) => setPersonnel(p => p ? { ...p, avatar_url: url } : p)}
               />
             </div>
-            <div className="mt-2">
-              <PersonnelStatusBadge status={personnel.status} pulse={personnel.status === 'active'} />
-            </div>
+            <PersonnelStatusBadge status={personnel.status} pulse={personnel.status === 'active'} />
             {changed && (
-              <p className="font-mono text-[9px] text-accent mt-1 animate-blink tracking-widest">
-                {t('live_update')}
-              </p>
+              <p className="font-mono text-[9px] text-accent animate-blink tracking-widest">{t('live_update')}</p>
             )}
           </div>
 
-          {/* Core data */}
-          <div className="flex-1 space-y-3">
+          {/* Fields */}
+          <div className="flex-1 space-y-4">
             <div>
-              <p className="font-mono text-[10px] text-text-muted tracking-widest">CODENAME</p>
-              <p className="font-sans text-2xl font-bold text-text tracking-widest animate-reveal">
-                {personnel.codename}
-              </p>
+              <p className="font-mono text-[9px] text-text-muted tracking-widest mb-0.5">CODENAME</p>
+              <p className="font-sans text-3xl font-bold text-text tracking-widest animate-reveal">{personnel.codename}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <DataField label="FULL NAME"     value={personnel.full_name} />
-              <DataField label="BUREAU ID"     value={personnel.id} accent />
-              <DataField label="ROLE"          value={personnel.role} />
-              <DataField label={t('squad_section')} value={squad?.name ?? t('unassigned')} />
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              <DataField label="FULL NAME"           value={personnel.full_name} />
+              <DataField label="BUREAU ID"           value={personnel.id} accent />
+              <DataField label="ROLE"                value={personnel.role} />
+              <DataField label={t('squad_section')}  value={squad?.name ?? t('unassigned')} />
             </div>
+            {isOwn && (
+              <div className="pt-2 border-t border-border/40">
+                <p className="font-mono text-[9px] text-accent/60">{t('own_file_note1')}</p>
+              </div>
+            )}
           </div>
-
         </div>
 
         {/* Status history / log panel */}
