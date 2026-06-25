@@ -102,7 +102,7 @@ export async function fetchApplicationByCodename(codename: string): Promise<Resu
 
 export async function updateApplicationProfile(
   applicationId: string,
-  fields: { notes?: string; skills?: string }
+  fields: { notes?: string; skills?: string; background_story?: string }
 ): Promise<{ error: string | null }> {
   try {
     const { error } = await supabase
